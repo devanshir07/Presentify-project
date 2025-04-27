@@ -56,8 +56,7 @@ const Login = () => {
                                     htmlFor="email"
                                     className="mb-2 inline-block text-sm text-gray-800 sm:text-base"
                                 >
-                                    Email   
-                                    
+                                    Email
                                 </label>
                                 <input
                                     id="email"

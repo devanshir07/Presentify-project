@@ -1,7 +1,5 @@
 import React from "react";
 import Navbar from "./components/Navbar/page";
-import Link from "next/link";
-
 
 const LandingPage = () => {
   return (
@@ -21,9 +19,9 @@ const LandingPage = () => {
         advanced AI technology.
         </p>
         <div className="flex gap-4">
-          <Link href="/create-ppt" className="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 text-lg font-semibold rounded-lg shadow-md">
+          <button className="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 text-lg font-semibold rounded-lg shadow-md">
             Generate from prompt
-          </Link>
+          </button>
           <button className="bg-white text-indigo-600 hover:bg-indigo-700 px-6 py-3 text-lg font-semibold rounded-lg shadow-md">
             Import Document
           </button>
@@ -36,16 +34,28 @@ const LandingPage = () => {
           <h2 className="text-3xl font-bold mb-8">Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="p-6 bg-gray-100 rounded-lg shadow">
-              <h3 className="text-xl font-semibold mb-2">AI-Powered Slides</h3>
-              <p>Generate sleek, professional slides in seconds using advanced AI technology.</p>
+              <h3 className="text-xl font-semibold mb-2">AI-Powered Slide Creation</h3>
+              <p>Generate slides with minimal input and enjoy a seamless workflow.</p>
             </div>
             <div className="p-6 bg-gray-100 rounded-lg shadow">
-              <h3 className="text-xl font-semibold mb-2">Customizable Designs</h3>
-              <p>Easily tweak and customize slides to suit your needs and preferences.</p>
+              <h3 className="text-xl font-semibold mb-2">Customizable Templates</h3>
+              <p>Choose from a variety of themes to match your style.</p>
             </div>
             <div className="p-6 bg-gray-100 rounded-lg shadow">
-              <h3 className="text-xl font-semibold mb-2">Easy to Use</h3>
-              <p>Our intuitive interface ensures a smooth and hassle-free experience.</p>
+              <h3 className="text-xl font-semibold mb-2">Advanced Design Tools</h3>
+              <p>Effortlessly add images, charts, and infographics.</p>
+            </div>
+            <div className="p-6 bg-gray-100 rounded-lg shadow">
+              <h4 className="text-xl font-semibold mb-2">Export Options</h4>
+              <p>Save presentations in multiple formats like PDF and PPTX.</p>
+            </div>
+            <div className="p-6 bg-gray-100 rounded-lg shadow">
+              <h5 className="text-xl font-semibold mb-2">Animation & Transitions</h5>
+              <p>Enhance your slides with smooth animations.</p>
+            </div>
+            <div className="p-6 bg-gray-100 rounded-lg shadow">
+              <h6 className="text-xl font-semibold mb-2">Integration with Tools</h6>
+              <p>Connect with external apps for enhanced functionality.</p>
             </div>
           </div>
         </div>
