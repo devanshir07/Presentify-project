@@ -547,9 +547,11 @@ const LandingPage = () => {
             Join over 10,000+ professionals who are creating stunning presentations in minutes with our AI-powered platform
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="../signup">
             <button className="bg-gradient-to-r from-blue-600 to-teal-500 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg transform hover:scale-105 transition-all duration-200 w-full sm:w-auto">
               Start Creating for Free
             </button>
+            </a>
             <button className="bg-white text-gray-800 border-2 border-gray-200 px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 w-full sm:w-auto">
               Watch Demo
             </button>
