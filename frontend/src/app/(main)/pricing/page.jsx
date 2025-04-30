@@ -1,17 +1,14 @@
 'use client';
-import Navbar from "@/app/components/Navbar/page";
 import React, { useState } from "react";
 import { Toaster, toast } from "react-hot-toast";
 
 export default function Pricing() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [billingCycle, setBillingCycle] = useState("Monthly");
-
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
     console.log(`Selected Plan:`, plan); // Log the selected plan to the console
   };
-
   const handleConfirm = () => {
     if (selectedPlan) {
       console.log(`Confirming Plan:`, selectedPlan); // Log the confirmation details
@@ -20,13 +17,11 @@ export default function Pricing() {
       toast.error("Please select a plan before confirming.");
     }
   };
-
   const toggleBillingCycle = () => {
     const newCycle = billingCycle === "Monthly" ? "Annually" : "Monthly";
     setBillingCycle(newCycle);
     toast(`Switched to Pay ${newCycle}.`);
   };
-
   const plans = [
     {
       id: 1,
@@ -50,10 +45,8 @@ export default function Pricing() {
       features: ["Unlimited AI creation", "Premium AI image generation", "Generate up to 60 slides"],
     },
   ];
-
   return (
     <>
-      <Navbar />
       <Toaster />
       <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-neutral-900">
         <div className="px-4 sm:px-6 lg:px-8 text-center">

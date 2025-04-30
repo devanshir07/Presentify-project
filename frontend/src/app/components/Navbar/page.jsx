@@ -18,7 +18,7 @@ const Navbar = () => {
             className="font-semibold text-xl text-black dark:text-white"
             aria-label="Brand"
           >
-            PRESENTIFY
+           PRESENTIFY
           </Link>
           <button
             type="button"
