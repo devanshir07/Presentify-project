@@ -6,7 +6,6 @@ require('dotenv').config();
 
 router.post('/add', (req, res) => {
     console.log(req.body);
-    res.send('response from user add');
     new Model(req.body).save()
         .then((result) => {
             res.status(200).json(result);
