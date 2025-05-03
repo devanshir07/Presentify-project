@@ -20,12 +20,11 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Function to download image from Pexels
+// Replace the downloadImage function with this improved version
 async function downloadImage(imageKeyword) {
     try {
         console.log(`Searching Pexels for keyword: ${imageKeyword}`);
         
-        // Search for images using Pexels API
         const searchResponse = await axios.get(`https://api.pexels.com/v1/search?query=${encodeURIComponent(imageKeyword)}&per_page=1&orientation=landscape`, {
             headers: {
                 'Authorization': process.env.PEXELS_API_KEY
@@ -53,9 +52,20 @@ async function downloadImage(imageKeyword) {
             return null;
         }
 
+        // Determine the image type from the Content-Type header
+        const contentType = imageResponse.headers['content-type'];
+        const extension = contentType === 'image/png' ? 'png' : 
+                         contentType === 'image/jpeg' ? 'jpeg' :
+                         contentType === 'image/jpg' ? 'jpg' : 'jpeg';
+
+        // Save image to temp file
+        const tempFileName = `temp_${Date.now()}.${extension}`;
+        const tempFilePath = path.join(uploadsDir, tempFileName);
+        fs.writeFileSync(tempFilePath, imageResponse.data);
+
         return {
-            data: imageResponse.data,
-            type: imageResponse.headers['content-type'] || 'image/jpeg'
+            path: tempFilePath,
+            type: contentType
         };
     } catch (error) {
         console.error('Error downloading image from Pexels:', error.message);
@@ -101,13 +111,15 @@ router.get('/preview/:filename', async (req, res) => {
 
         // Use PowerPoint to convert PPTX to PDF
         const powershellScript = `
-            $PowerPoint = New-Object -ComObject PowerPoint.Application
-            $PowerPoint.Visible = [Microsoft.Office.Core.MsoTriState]::msoFalse
-            $Presentation = $PowerPoint.Presentations.Open("${filePath}")
-            $Presentation.SaveAs("${outputPath}", 32) # 32 is the value for PDF format
-            $Presentation.Close()
-            $PowerPoint.Quit()
-            [System.Runtime.Interopservices.Marshal]::ReleaseComObject($PowerPoint)
+    $PowerPoint = New-Object -ComObject PowerPoint.Application
+    $Presentation = $PowerPoint.Presentations.Open("${filePath}")
+    $Presentation.SaveAs("${outputPath}", 32)
+    $Presentation.Close()
+    $PowerPoint.Quit()
+    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($Presentation)
+    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($PowerPoint)
+    [System.GC]::Collect()
+    [System.GC]::WaitForPendingFinalizers()
         `;
 
         const ps = spawn('powershell.exe', ['-Command', powershellScript]);
@@ -224,7 +236,9 @@ Format the response strictly as JSON with this structure:
       "animation": "Choose from: FADE_IN, ZOOM, WIPE, FLOAT_IN, SPLIT, WHEEL, CIRCLE",
       "transition": "Choose from: MORPH, FADE, PUSH, SPLIT, CUT, DISSOLVE, COVER",
       "imageKeyword": "Specific descriptive keyword for Unsplash - make it precise and relevant",
-      "imageUrl": "https://source.unsplash.com/featured/?"
+      "imageUrl": "Include the URL of the image that fits this slide's content"
+
+
     }
   ]
 }
@@ -252,7 +266,7 @@ Return only the JSON without any additional text or formatting.`;
         // Create PPT
         const pres = new pptxgen();
 
-            // Configure default slide size (16:9)
+        // Configure default slide size (16:9)
         pres.layout = 'LAYOUT_16x9';
 
         // Keep track of temporary image files
@@ -293,22 +307,18 @@ Return only the JSON without any additional text or formatting.`;
                     animate: { animation: slide.animation.toLowerCase() }
                 });
 
-                // Handle image if present
+                // Replace the image handling section in the create-ppt route
                 if (slide.imageKeyword) {
                     try {
                         const imageResult = await downloadImage(slide.imageKeyword);
-                        if (imageResult && imageResult.data) {
-                            // Create a buffer from the image data
-                            const imageBuffer = Buffer.from(imageResult.data);
-                            
+                        if (imageResult && imageResult.path) {
                             if (slide.template === 'IMAGE_WITH_CAPTION') {
                                 const imageOpts = {
-                                    data: imageBuffer,
+                                    path: imageResult.path,
                                     x: '10%',
                                     y: '25%',
                                     w: '80%',
-                                    h: '40%',
-                                    type: imageResult.type
+                                    h: '40%'
                                 };
                                 await newSlide.addImage(imageOpts);
                                 
@@ -318,32 +328,20 @@ Return only the JSON without any additional text or formatting.`;
                                     y: '70%',
                                     w: '80%',
                                     fontSize: 18,
-                                    bullet: true,
-                                    color: '666666',
-                                    animate: { animation: slide.animation.toLowerCase() }
-                                });
-                            } else if (slide.template === 'TWO_CONTENT') {
-                                const imageOpts = {
-                                    data: imageBuffer,
-                                    x: '55%',
-                                    y: '25%',
-                                    w: '40%',
-                                    h: '60%',
-                                    type: imageResult.type
-                                };
-                                await newSlide.addImage(imageOpts);
-                                
-                                const contentText = slide.content.join('\n');
-                                newSlide.addText(contentText, {
-                                    x: '5%',
-                                    y: '25%',
-                                    w: '45%',
-                                    fontSize: 18,
-                                    bullet: true,
+                           bullet: true,
                                     color: '666666',
                                     animate: { animation: slide.animation.toLowerCase() }
                                 });
                             } else {
+                                const imageOpts = {
+                                    path: imageResult.path,
+                                    x: '60%',
+                                    y: '25%',
+                                    w: '35%',
+                                    h: '45%'
+                                };
+                                await newSlide.addImage(imageOpts);
+
                                 const contentText = slide.content.join('\n');
                                 newSlide.addText(contentText, {
                                     x: '5%',
@@ -354,29 +352,10 @@ Return only the JSON without any additional text or formatting.`;
                                     color: '666666',
                                     animate: { animation: slide.animation.toLowerCase() }
                                 });
-                                
-                                const imageOpts = {
-                                    data: imageBuffer,
-                                    x: '60%',
-                                    y: '25%',
-                                    w: '35%',
-                                    h: '45%',
-                                    type: imageResult.type
-                                };
-                                await newSlide.addImage(imageOpts);
                             }
-                        } else {
-                            // Fall back to text-only slide if image download fails
-                            const contentText = slide.content.join('\n');
-                            newSlide.addText(contentText, {
-                                x: '5%',
-                                y: '25%',
-                                w: '90%',
-                                fontSize: 18,
-                                bullet: true,
-                                color: '666666',
-                                animate: { animation: slide.animation.toLowerCase() }
-                            });
+                            
+                            // Add the temporary image path to the cleanup array
+                            tempImages.push(imageResult.path);
                         }
                     } catch (imageError) {
                         console.error('Error adding image to slide:', imageError);
