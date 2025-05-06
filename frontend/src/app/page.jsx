@@ -1,6 +1,6 @@
 'use client';
 import React from "react";
-import Navbar from "./components/Navbar/page";
+import Navbar from "../components/Navbar/page";
 import { motion } from "framer-motion";
 
 const containerVariants = {
@@ -579,6 +579,7 @@ const LandingPage = () => {
     </>
   );
 };
+
 
 // Add the required CSS animations
 const style = document.createElement('style');
