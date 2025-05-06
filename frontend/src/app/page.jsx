@@ -577,6 +577,7 @@ const LandingPage = () => {
   );
 };
 
+
 // Add the required CSS animations
 const style = document.createElement('style');
 style.textContent = `
