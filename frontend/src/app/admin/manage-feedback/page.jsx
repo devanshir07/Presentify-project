@@ -41,9 +41,9 @@ const ManageFeedback = () => {
   };
 
   const filteredFeedbacks = feedbacks.filter(feedback => 
-    feedback.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    feedback.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    feedback.message.toLowerCase().includes(searchTerm.toLowerCase())
+    feedback.fullName?.toLowerCase() || "".includes(searchTerm.toLowerCase()) ||
+    feedback.email?.toLowerCase() || "".includes(searchTerm.toLowerCase()) ||
+    feedback.message?.toLowerCase() || "".includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -78,7 +78,7 @@ const ManageFeedback = () => {
               {filteredFeedbacks.map((feedback) => (
                 <tr key={feedback._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{feedback.name}</div>
+                    <div className="text-sm font-medium text-gray-900">{feedback.fullName}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">{feedback.email}</div>

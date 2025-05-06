@@ -5,22 +5,22 @@ const UserRouter = require('./routers/userRouter');
 const PPTRouter = require('./routers/pptRouter');
 const FeedbackRouter = require('./routers/feedbackRouter');
 const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
+// const helmet = require('helmet');
+// const morgan = require('morgan');
 
 const app = express();
 
 const port = process.env.PORT || 5000;
 
 // Security middleware
-app.use(helmet());
+// app.use(helmet());
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true
 }));
 
 // Logging middleware
-app.use(morgan('dev'));
+// app.use(morgan('dev'));
 
 // Body parsing middleware
 app.use(express.json({ limit: '50mb' }));

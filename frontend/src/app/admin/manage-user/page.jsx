@@ -50,7 +50,7 @@ const ManageUser = () => {
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/users/${selectedUser._id}`, updateForm);
+      await axios.put(`http://localhost:5000/users/${selectedUser._id}`, updateForm);
       setIsUpdateModalOpen(false);
       fetchUsers();
     } catch (error) {
