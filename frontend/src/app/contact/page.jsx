@@ -1,24 +1,21 @@
 'use client';
-
 import React, { useState } from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field, ErrorMessage, useFormik} from "formik";
 import * as Yup from "yup";
 import { motion } from 'framer-motion';
+import axios from "axios";
+import toast from "react-hot-toast";
 
 // Validation Schema
 const ContactSchema = Yup.object().shape({
-  firstName: Yup.string()
-    .min(2, "First name is too short")
-    .max(50, "First name is too long")
-    .required("First name is required"),
-  lastName: Yup.string()
-    .min(2, "Last name is too short")
-    .max(50, "Last name is too long")
-    .required("Last name is required"),
+  name: Yup.string()
+    .min(2,"Name is too short")
+    .max(50,"Name is too long")
+    .required("Name is required"),
   email: Yup.string()
     .email("Invalid email address")
     .required("Email is required"),
-  phone: Yup.string()
+    phoneNumber: Yup.string()
     .matches(/^[0-9]+$/, "Phone number must contain only digits")
     .min(10, "Phone number must be at least 10 digits")
     .max(15, "Phone number is too long")
@@ -29,32 +26,39 @@ const ContactSchema = Yup.object().shape({
 });
 
 const Contact = () => {
-  const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
-
-  const handleSubmit = (values, { resetForm }) => {
-    console.log("Submitted values:", values);
-    setToastMessage("Your inquiry has been submitted successfully!");
-    setShowToast(true);
-
-    // Hide toast after 3 seconds
-    setTimeout(() => setShowToast(false), 3000);
-
-    resetForm();
-  };
+  
+  const contactForm = useFormik({
+    initialValues: {
+      name: "",
+      email: "",
+      phoneNumber: "",
+      details: "",
+    },
+    validationSchema: ContactSchema,
+    onSubmit: (values, { resetForm }) => {
+      axios.post(`${process.env.NEXT_PUBLIC_API_URL}/contact/add`,values)
+        .then((result) => {
+          console.log(result.data);
+          toast.success("Contact form submitted successfully!");
+          //setSubmitting(false);
+          resetForm();
+        }).catch((err) => {
+          console.log(err);
+          toast.error("Error submitting contact form. Please try again.");
+          // setSubmitting(false)
+        });
+    },
+  })
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50">
-      {showToast && (
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -50 }}
           className="fixed top-5 right-5 bg-white shadow-lg rounded-lg p-4 z-50 text-gray-800"
         >
-          {toastMessage}
         </motion.div>
-      )}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -74,107 +78,89 @@ const Contact = () => {
             We'd love to talk about how we can help you.
           </p>
         </motion.div>
-        <Formik
-          initialValues={{
-            firstName: "",
-            lastName: "",
-            email: "",
-            phone: "",
-            details: "",
-          }}
-          validationSchema={ContactSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ isSubmitting }) => (
-            <Form className="mt-8">
+            <form onSubmit={contactForm.handleSubmit}
+            className="mt-8">
               <div className="grid gap-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <motion.div
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <Field
-                      type="text"
-                      name="firstName"
-                      placeholder="First Name"
-                      className="py-2.5 px-4 block w-full border-2 border-gray-300 rounded-lg sm:text-sm focus:border-pink-500 focus:ring-pink-500 transition-colors duration-200"
-                    />
-                    <ErrorMessage
-                      name="firstName"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
-                  </motion.div>
-                  <motion.div
-                    initial={{ x: 20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <Field
-                      type="text"
-                      name="lastName"
-                      placeholder="Last Name"
-                      className="py-2.5 px-4 block w-full border-2 border-gray-300 rounded-lg sm:text-sm focus:border-pink-500 focus:ring-pink-500 transition-colors duration-200"
-                    />
-                    <ErrorMessage
-                      name="lastName"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
-                  </motion.div>
-                </div>
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <label htmlFor="name" className="block mb-2 text-sm font-medium text-gray-700">Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={contactForm.values.name}
+                    onChange={contactForm.handleChange}
+                    placeholder="Name"
+                    className="py-2.5 px-4 block w-full border-2 border-gray-300 rounded-lg sm:text-sm focus:border-pink-500 focus:ring-pink-500 transition-colors duration-200"
+                  />
+                   {
+                     contactForm.touched.name && contactForm.errors.name ? (
+                       <div className="text-sm text-red-600">{contactForm.errors.name}</div>
+                      ) : null
+                    }
+                </motion.div>
                 <motion.div
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <Field
+                    <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-700">Email</label>
+                  <input
                     type="email"
                     name="email"
+                    value={contactForm.values.email}
+                    onChange={contactForm.handleChange}
                     placeholder="Email"
                     className="py-2.5 px-4 block w-full border-2 border-gray-300 rounded-lg sm:text-sm focus:border-pink-500 focus:ring-pink-500 transition-colors duration-200"
                   />
-                  <ErrorMessage
-                    name="email"
-                    component="div"
-                    className="text-red-500 text-sm mt-1"
-                  />
+                   {
+                     contactForm.touched.email && contactForm.errors.email ? (
+                       <div className="text-sm text-red-600">{contactForm.errors.email}</div>
+                      ) : null
+                    }
                 </motion.div>
                 <motion.div
                   initial={{ x: 20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.4 }}
                 >
-                  <Field
+                    <label htmlFor="phoneNumber" className="block mb-2 text-sm font-medium text-gray-700">Phone</label>
+                  <input
                     type="text"
-                    name="phone"
+                    name="phoneNumber"
+                    value={contactForm.values.phoneNumber}
+                    onChange={contactForm.handleChange}
                     placeholder="Phone Number"
                     className="py-2.5 px-4 block w-full border-2 border-gray-300 rounded-lg sm:text-sm focus:border-pink-500 focus:ring-pink-500 transition-colors duration-200"
                   />
-                  <ErrorMessage
-                    name="phone"
-                    component="div"
-                    className="text-red-500 text-sm mt-1"
-                  />
+                   {
+                     contactForm.touched.phoneNumber && contactForm.errors.phoneNumber ? (
+                       <div className="text-sm text-red-600">{contactForm.errors.phoneNumber}</div>
+                      ) : null
+                    }
                 </motion.div>
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <Field
-                    as="textarea"
+                  <label htmlFor="details" className="block mb-2 text-sm font-medium text-gray-700">Details</label>
+                  <input
+                    type="textarea"
                     name="details"
+                    value={contactForm.values.details}
+                    onChange={contactForm.handleChange}
                     rows={4}
                     placeholder="Details"
                     className="py-2.5 px-4 block w-full border-2 border-gray-300 rounded-lg sm:text-sm focus:border-pink-500 focus:ring-pink-500 transition-colors duration-200"
                   />
-                  <ErrorMessage
-                    name="details"
-                    component="div"
-                    className="text-red-500 text-sm mt-1"
-                  />
+                  {
+                  contactForm.touched.details && contactForm.errors.details ? (
+                    <div className="text-sm text-red-600">{contactForm.errors.details}</div>
+                  ) : null
+                }
                 </motion.div>
               </div>
               <motion.div 
@@ -186,14 +172,11 @@ const Contact = () => {
                 <button
                   type="submit"
                   className="w-full py-3 px-4 text-sm font-medium rounded-lg border border-transparent bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
-                  disabled={isSubmitting}
                 >
                   Send inquiry
                 </button>
               </motion.div>
-            </Form>
-          )}
-        </Formik>
+            </form>
       </motion.div>
     </div>
   );

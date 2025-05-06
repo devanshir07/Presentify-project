@@ -25,7 +25,7 @@ const ManageContact = () => {
   const fetchContacts = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/contact/getall');
+      const response = await axios.get('http://localhost:5000/contact/getall');
       setContacts(response.data);
     } catch (error) {
       console.error('Error fetching contacts:', error);
@@ -36,7 +36,7 @@ const ManageContact = () => {
   const handleDelete = async (contactId) => {
     if (window.confirm('Are you sure you want to delete this contact entry?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/contact/delete/${contactId}`);
+        await axios.delete(`http://localhost:5000/contact/delete/${contactId}`);
         fetchContacts();
       } catch (error) {
         console.error('Error deleting contact:', error);
@@ -84,6 +84,7 @@ const ManageContact = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message Preview</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -120,18 +121,24 @@ const ManageContact = () => {
                       <div className="text-sm text-gray-500">{contact.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{contact.phoneNumber}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">
                         {format(new Date(contact.createdAt), 'MMM dd, yyyy')}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-500">
-                        {contact.message.length > 50 
-                          ? `${contact.message.substring(0, 50)}...` 
-                          : contact.message}
+                        {contact.details ? 
+                          (contact.details.length > 50 
+                            ? `${contact.details.substring(0, 50)}...` 
+                            : contact.details)
+                          : 'No message'
+                        }
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap xt-sm font-medium">
                       <button
                         onClick={() => handleView(contact)}
                         className="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200"

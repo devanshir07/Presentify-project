@@ -4,6 +4,7 @@ const path = require('path');
 const UserRouter = require('./routers/userRouter');
 const PPTRouter = require('./routers/pptRouter');
 const FeedbackRouter = require('./routers/feedbackRouter');
+const ContactRouter = require ('./routers/contactRouter')
 const cors = require('cors');
 
 const app = express();
@@ -21,6 +22,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/user', UserRouter);
 app.use('/api/ppt', PPTRouter);
 app.use('/feedback', FeedbackRouter);
+app.use('/contact', ContactRouter);
 
 app.listen(port, () => {
     console.log(`Server started on port ${port}`);
