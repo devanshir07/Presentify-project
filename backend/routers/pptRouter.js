@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Model = require('../models/userModel');
+const Model = require('../models/pptModel');
 require('dotenv').config();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const pptxgen = require('pptxgenjs');
@@ -20,53 +20,125 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Add this helper function at the top of your file
+function isLightColor(color) {
+    // Remove the '#' if present
+    const hex = color.replace('#', '');
+    
+    // Convert hex to RGB
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Calculate relative luminance
+    // Using the formula from WCAG 2.0
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Return true if color is light (luminance > 0.5)
+    return luminance > 0.5;
+}
+
 // Replace the downloadImage function with this improved version
-async function downloadImage(imageKeyword) {
+async function downloadImage(imageKeyword, topic) {
     try {
-        console.log(`Searching Pexels for keyword: ${imageKeyword}`);
+        // Combine the topic context with the image keyword for better relevance
+        const searchTerm = `${topic} ${imageKeyword}`.trim();
+        console.log(`Searching Pexels for keyword: ${searchTerm}`);
         
-        const searchResponse = await axios.get(`https://api.pexels.com/v1/search?query=${encodeURIComponent(imageKeyword)}&per_page=1&orientation=landscape`, {
+        // Get multiple images to have better options
+        const searchResponse = await axios.get(`https://api.pexels.com/v1/search?query=${encodeURIComponent(searchTerm)}&per_page=3&orientation=landscape`, {
             headers: {
                 'Authorization': process.env.PEXELS_API_KEY
             }
         });
 
-        if (!searchResponse.data?.photos?.[0]?.src?.large2x) {
-            console.error('No images found on Pexels');
-            return null;
-        }
+        if (!searchResponse.data?.photos?.length) {
+            // Fallback to just the imageKeyword if no results with combined search
+            const fallbackResponse = await axios.get(`https://api.pexels.com/v1/search?query=${encodeURIComponent(imageKeyword)}&per_page=3&orientation=landscape`, {
+                headers: {
+                    'Authorization': process.env.PEXELS_API_KEY
+                }
+            });
 
-        const imageUrl = searchResponse.data.photos[0].src.large2x;
-        console.log(`Found image URL: ${imageUrl}`);
-
-        // Download the actual image
-        const imageResponse = await axios.get(imageUrl, {
-            responseType: 'arraybuffer',
-            headers: {
-                'Accept': 'image/jpeg, image/png, image/jpg'
+            if (!fallbackResponse.data?.photos?.length) {
+                console.error('No images found on Pexels');
+                return null;
             }
-        });
+            
+            // Select the most relevant image based on size and quality
+            const bestPhoto = fallbackResponse.data.photos.reduce((best, current) => {
+                return (current.width * current.height > best.width * best.height) ? current : best;
+            });
+            
+            const imageUrl = bestPhoto.src.large2x;
+            console.log(`Found fallback image URL: ${imageUrl}`);
 
-        if (!imageResponse.data || imageResponse.data.length === 0) {
-            console.error('No image data received');
-            return null;
+            // Download the actual image
+            const imageResponse = await axios.get(imageUrl, {
+                responseType: 'arraybuffer',
+                headers: {
+                    'Accept': 'image/jpeg, image/png, image/jpg'
+                }
+            });
+
+            if (!imageResponse.data || imageResponse.data.length === 0) {
+                console.error('No image data received');
+                return null;
+            }
+
+            // Determine the image type from the Content-Type header
+            const contentType = imageResponse.headers['content-type'];
+            const extension = contentType === 'image/png' ? 'png' : 
+                            contentType === 'image/jpeg' ? 'jpeg' :
+                            contentType === 'image/jpg' ? 'jpg' : 'jpeg';
+
+            // Save image to temp file
+            const tempFileName = `temp_${Date.now()}.${extension}`;
+            const tempFilePath = path.join(uploadsDir, tempFileName);
+            fs.writeFileSync(tempFilePath, imageResponse.data);
+
+            return {
+                path: tempFilePath,
+                type: contentType
+            };
+        } else {
+            // Select the most relevant image based on size and quality
+            const bestPhoto = searchResponse.data.photos.reduce((best, current) => {
+                return (current.width * current.height > best.width * best.height) ? current : best;
+            });
+            
+            const imageUrl = bestPhoto.src.large2x;
+            console.log(`Found image URL: ${imageUrl}`);
+
+            // Download the actual image
+            const imageResponse = await axios.get(imageUrl, {
+                responseType: 'arraybuffer',
+                headers: {
+                    'Accept': 'image/jpeg, image/png, image/jpg'
+                }
+            });
+
+            if (!imageResponse.data || imageResponse.data.length === 0) {
+                console.error('No image data received');
+                return null;
+            }
+
+            // Determine the image type from the Content-Type header
+            const contentType = imageResponse.headers['content-type'];
+            const extension = contentType === 'image/png' ? 'png' : 
+                            contentType === 'image/jpeg' ? 'jpeg' :
+                            contentType === 'image/jpg' ? 'jpg' : 'jpeg';
+
+            // Save image to temp file
+            const tempFileName = `temp_${Date.now()}.${extension}`;
+            const tempFilePath = path.join(uploadsDir, tempFileName);
+            fs.writeFileSync(tempFilePath, imageResponse.data);
+
+            return {
+                path: tempFilePath,
+                type: contentType
+            };
         }
-
-        // Determine the image type from the Content-Type header
-        const contentType = imageResponse.headers['content-type'];
-        const extension = contentType === 'image/png' ? 'png' : 
-                         contentType === 'image/jpeg' ? 'jpeg' :
-                         contentType === 'image/jpg' ? 'jpg' : 'jpeg';
-
-        // Save image to temp file
-        const tempFileName = `temp_${Date.now()}.${extension}`;
-        const tempFilePath = path.join(uploadsDir, tempFileName);
-        fs.writeFileSync(tempFilePath, imageResponse.data);
-
-        return {
-            path: tempFilePath,
-            type: contentType
-        };
     } catch (error) {
         console.error('Error downloading image from Pexels:', error.message);
         return null;
@@ -191,6 +263,18 @@ router.get('/download/:filename', (req, res) => {
     }
 });
 
+// Get all presentations
+router.get('/getall', (req, res) => {
+    Model.find()
+        .then((result) => {
+            res.status(200).json(result);
+        })
+        .catch((err) => {
+            console.log(err);
+            res.status(500).json(err);
+        });
+});
+
 router.post('/create-ppt', async (req, res) => {
     try {
         const { topic, numberOfSlides, additionalInfo } = req.body;
@@ -213,17 +297,45 @@ Additional requirements: ${additionalInfo || 'None'}.
 Please follow these guidelines:
 1. Each slide should have:
    - A clear, concise title that captures the main point
-   - 3-5 key bullet points (each 1-2 lines long)
-   - A descriptive keyword for Unsplash image search that matches the slide's content
-   - Specific animation effects that enhance the content delivery
+   - 3-4 key bullet points (each 1-2 lines long)
+   - Multiple descriptive keywords for image search that match the slide's content
+   - Background design theme suggestion (modern, gradient, geometric, etc.)
+   - Background color scheme (provide light and dark contrasting hex codes)
+   - Text color that ensures WCAG 2.1 AA contrast ratio (provide hex code)
    - Appropriate slide transitions that flow naturally
+   - Clear content zones to prevent overlap between text and images
 
-2. The first slide should be a title slide
-3. The second slide should outline the key points to be covered
-4. The remaining slides should follow a logical progression
+2. Layout Guidelines:
+   - Title should always be at the top 20% of the slide
+   - Content should be positioned based on image placement:
+     * If image is on right: text on left 40% of slide
+     * If image is on left: text on right 40% of slide
+     * If image is banner: text below image
+     * If grid layout: text below images
+   - Maintain 16:9 aspect ratio for all layout decisions
+   - Images should have fixed aspect ratios (4:3 or 16:9)
+   - Minimum 20px padding between elements
+
+3. Color Guidelines:
+   - Background colors must provide sufficient contrast for text
+   - Text colors must meet WCAG 2.1 AA standards (4.5:1 ratio for normal text)
+   - Include a secondary text color for highlights or emphasis
+   - Consistent color scheme throughout presentation
 
 Format the response strictly as JSON with this structure:
 {
+  "theme": {
+    "primary": "#hexcolor",
+    "accent": "#hexcolor",
+    "textPrimary": "#hexcolor",
+    "textSecondary": "#hexcolor",
+    "designStyle": "modern/geometric/gradient/etc",
+    "spacing": {
+      "titleTop": "5%",
+      "contentPadding": "20px",
+      "elementGap": "15px"
+    }
+  },
   "slides": [
     {
       "title": "Clear and Engaging Title",
@@ -233,24 +345,28 @@ Format the response strictly as JSON with this structure:
         "Actionable or concluding point"
       ],
       "template": "Choose from: TITLE_SLIDE, TITLE_AND_CONTENT, COMPARISON, IMAGE_WITH_CAPTION, TWO_CONTENT, SECTION_HEADER",
-      "animation": "Choose from: FADE_IN, ZOOM, WIPE, FLOAT_IN, SPLIT, WHEEL, CIRCLE",
       "transition": "Choose from: MORPH, FADE, PUSH, SPLIT, CUT, DISSOLVE, COVER",
-      "imageKeyword": "Specific descriptive keyword for Unsplash - make it precise and relevant",
-      "imageUrl": "Include the URL of the image that fits this slide's content"
-
-
+      "backgroundStyle": {
+        "type": "gradient/solid/pattern",
+        "colors": ["#hexcolor1", "#hexcolor2"],
+        "pattern": "dots/lines/geometric/etc"
+      },
+      "imageKeywords": ["keyword1", "keyword2", "keyword3"],
+      "imageLayout": {
+        "type": "grid/floating/banner/side-by-side",
+        "contentPosition": "left/right/bottom",
+        "aspectRatio": "16:9",
+        "maxHeight": "40%",
+        "spacing": {
+          "top": "25%",
+          "bottom": "15%",
+          "left": "5%",
+          "right": "5%"
+        }
+      }
     }
   ]
-}
-
-Important notes:
-- Make image keywords specific and descriptive (e.g., "mountain-sunrise-landscape" instead of just "mountain")
-- Ensure content points are informative and not generic
-- Choose animations that complement the content type
-- Vary slide layouts for visual interest
-- Keep language professional and concise
-
-Return only the JSON without any additional text or formatting.`;
+}`;
 
         const result = await geminiModel.generateContent(prompt);
         const response = await result.response;
@@ -269,10 +385,36 @@ Return only the JSON without any additional text or formatting.`;
         // Configure default slide size (16:9)
         pres.layout = 'LAYOUT_16x9';
 
+        // Set presentation theme with proper contrast
+        const theme = pptContent.theme;
+        const defaultTheme = {
+            primary: '#FFFFFF',        // White background
+            accent: '#2563EB',        // Blue accent
+            textPrimary: '#0d1521',   // Dark gray text
+            textSecondary: '#4B553', // Medium gray text
+            background: {
+                light: '#F3F4F6',     // Light gray
+                dark: '#1F2937'       // Dark gray
+            }
+        };
+
+        // Use theme colors from API response or fall back to defaults
+        pres.theme = {
+            background: { color: theme.primary || defaultTheme.primary },
+            title: { 
+                color: theme.textPrimary || defaultTheme.textPrimary,
+                fontSize: 44 
+            },
+            body: { 
+                color: theme.textPrimary || defaultTheme.textPrimary,
+                fontSize: 18 
+            }
+        };
+
         // Keep track of temporary image files
         const tempImages = [];
 
-        // Add slides
+        // Add slides with proper contrast
         for (let i = 0; i < pptContent.slides.length; i++) {
             const slide = pptContent.slides[i];
             const newSlide = pres.addSlide();
@@ -282,107 +424,108 @@ Return only the JSON without any additional text or formatting.`;
                 name: slide.transition.toLowerCase()
             };
 
-            // Set slide layout based on template type
-            if (slide.template === 'TITLE_SLIDE') {
-                newSlide.addText(slide.title, {
-                    x: '10%',
-                    y: '40%',
-                    w: '80%',
-                    fontSize: 44,
-                    bold: true,
-                    color: '363636',
-                    align: 'center',
-                    animate: { animation: slide.animation.toLowerCase() }
-                });
-            } else {
-                // Add title
-                newSlide.addText(slide.title, {
-                    x: '5%',
-                    y: '5%',
-                    w: '90%',
-                    h: '15%',
-                    fontSize: 32,
-                    bold: true,
-                    color: '363636',
-                    animate: { animation: slide.animation.toLowerCase() }
-                });
-
-                // Replace the image handling section in the create-ppt route
-                if (slide.imageKeyword) {
-                    try {
-                        const imageResult = await downloadImage(slide.imageKeyword);
-                        if (imageResult && imageResult.path) {
-                            if (slide.template === 'IMAGE_WITH_CAPTION') {
-                                const imageOpts = {
-                                    path: imageResult.path,
-                                    x: '10%',
-                                    y: '25%',
-                                    w: '80%',
-                                    h: '40%'
-                                };
-                                await newSlide.addImage(imageOpts);
-                                
-                                const contentText = slide.content.join('\n');
-                                newSlide.addText(contentText, {
-                                    x: '10%',
-                                    y: '70%',
-                                    w: '80%',
-                                    fontSize: 18,
-                           bullet: true,
-                                    color: '666666',
-                                    animate: { animation: slide.animation.toLowerCase() }
-                                });
-                            } else {
-                                const imageOpts = {
-                                    path: imageResult.path,
-                                    x: '60%',
-                                    y: '25%',
-                                    w: '35%',
-                                    h: '45%'
-                                };
-                                await newSlide.addImage(imageOpts);
-
-                                const contentText = slide.content.join('\n');
-                                newSlide.addText(contentText, {
-                                    x: '5%',
-                                    y: '25%',
-                                    w: '50%',
-                                    fontSize: 18,
-                                    bullet: true,
-                                    color: '666666',
-                                    animate: { animation: slide.animation.toLowerCase() }
-                                });
-                            }
-                            
-                            // Add the temporary image path to the cleanup array
-                            tempImages.push(imageResult.path);
-                        }
-                    } catch (imageError) {
-                        console.error('Error adding image to slide:', imageError);
-                        // Fall back to text-only slide
-                        const contentText = slide.content.join('\n');
-                        newSlide.addText(contentText, {
-                            x: '5%',
-                            y: '25%',
-                            w: '90%',
-                            fontSize: 18,
-                            bullet: true,
-                            color: '666666',
-                            animate: { animation: slide.animation.toLowerCase() }
-                        });
+            // Apply background style with contrast check
+            if (slide.backgroundStyle.type === 'gradient') {
+                // Ensure gradient colors have enough contrast with text
+                const gradientColors = slide.backgroundStyle.colors.map(color => 
+                    isLightColor(color) ? color : defaultTheme.background.light
+                );
+                
+                newSlide.background = {
+                    gradient: {
+                        type: 'linear',
+                        stops: [
+                            { color: gradientColors[0], position: 0 },
+                            { color: gradientColors[1], position: 100 }
+                        ]
                     }
-                } else {
-                    // No image - just add content points
-                    const contentText = slide.content.join('\n');
-                    newSlide.addText(contentText, {
+                };
+            } else {
+                // Use a light background if not specified or if too dark
+                const bgColor = slide.backgroundStyle.colors[0];
+                newSlide.background = { 
+                    color: isLightColor(bgColor) ? bgColor : defaultTheme.background.light 
+                };
+            }
+
+            // Add title with contrasting color
+            newSlide.addText(slide.title, {
+                x: '5%',
+                y: '5%',
+                w: '90%',
+                h: '15%',
+                fontSize: 32,
+                bold: true,
+                color: theme.textPrimary || defaultTheme.textPrimary,
+                align: 'left'
+            });
+
+            // Update content text colors based on background
+            if (slide.template === 'TITLE_SLIDE') {
+                if (slide.content && slide.content.length > 0) {
+                    newSlide.addText(slide.content.join('\n'), {
+                        x: '10%',
+                        y: '40%',
+                        w: '80%',
+                        h: '30%',
+                        fontSize: 24,
+                        color: theme.textPrimary || defaultTheme.textPrimary,
+                        align: 'center'
+                    });
+                }
+            } else {
+                if (slide.content && slide.content.length > 0) {
+                    newSlide.addText(slide.content.join('\n'), {
                         x: '5%',
                         y: '25%',
-                        w: '90%',
+                        w: slide.imageKeywords ? '45%' : '90%',
+                        h: '60%',
                         fontSize: 18,
-                        bullet: true,
-                        color: '666666',
-                        animate: { animation: slide.animation.toLowerCase() }
+                        color: theme.textPrimary || defaultTheme.textPrimary,
+                        bullet: {
+                            type: 'bullet',
+                            indent: 15,
+                            numberingStart: 0,
+                            style: { 
+                                type: 'solid', 
+                                color: theme.textPrimary || defaultTheme.textPrimary 
+                            }
+                        },
+                        bulletFont: { 
+                            name: 'Arial',
+                            size: 10
+                        },
+                        paraSpaceAfter: 20,
+                        paraSpaceBefore: 5,
+                        lineSpacing: 1.5,
+                        indentLevel: 0,
+                        margin: [0, 0, 15, 0],
+                        breakLine: true
                     });
+                }
+
+                // Handle images if present
+                if (slide.imageKeywords && slide.imageKeywords.length > 0) {
+                    const imagePromises = slide.imageKeywords.map(keyword => 
+                        downloadImage(keyword, topic)
+                    );
+
+                    const imageResults = await Promise.all(imagePromises);
+                    const validImages = imageResults.filter(result => result && result.path);
+
+                    if (validImages.length > 0) {
+                        // Add single image with proper positioning
+                        const imageOpts = {
+                            path: validImages[0].path,
+                            x: '55%',        // Position on right side
+                            y: '25%',        // Align with content
+                            w: '40%',        // Width
+                            h: '50%',        // Height
+                            sizing: { type: 'contain', w: '40%', h: '50%' }
+                        };
+                        newSlide.addImage(imageOpts);
+                        tempImages.push(validImages[0].path);
+                    }
                 }
             }
         }

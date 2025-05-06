@@ -44,7 +44,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-pink-50 to-pink-100">
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50">
       {showToast && (
         <motion.div
           initial={{ opacity: 0, y: -50 }}
@@ -67,7 +67,7 @@ const Contact = () => {
           transition={{ duration: 0.3 }}
           className="text-center"
         >
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-pink-400 bg-clip-text text-transparent sm:text-4xl">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-black bg-clip-text  sm:text-4xl">
             Contact us
           </h1>
           <p className="mt-1 text-gray-600">
@@ -185,7 +185,7 @@ const Contact = () => {
               >
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 text-sm font-medium rounded-lg border border-transparent bg-gradient-to-r from-pink-600 to-pink-500 text-white hover:from-pink-700 hover:to-pink-600 focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition-all duration-200"
+                  className="w-full py-3 px-4 text-sm font-medium rounded-lg border border-transparent bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
                   disabled={isSubmitting}
                 >
                   Send inquiry
