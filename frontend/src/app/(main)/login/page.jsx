@@ -5,8 +5,12 @@ import * as Yup from 'yup';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 const Login = () => {
+
+    const router = useRouter();
+
     // Define validation schema with Yup
     const validationSchema = Yup.object({
         email: Yup.string()
@@ -31,6 +35,7 @@ const Login = () => {
                 .then((result) => {
                     toast.success('Login successful!');
                     localStorage.setItem('token', result.data.token);
+                    router.push('/');
                     resetForm();
                 }).catch((err) => {
                     setSubmitting(false);
