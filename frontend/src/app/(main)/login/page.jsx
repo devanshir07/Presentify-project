@@ -41,7 +41,7 @@ const Login = () => {
     });
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-8">
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 py-8">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -52,9 +52,9 @@ const Login = () => {
                     initial={{ scale: 0.9 }}
                     animate={{ scale: 1 }}
                     transition={{ duration: 0.3 }}
-                    className="mb-4 text-center text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent md:mb-8 lg:text-3xl"
+                    className="mb-4 text-center text-2xl font-bold bg-gradient-to-r from-black bg-clip-text  md:mb-8 lg:text-3xl"
                 >
-                    Login to Presentify
+                    Login
                 </motion.h2>
                 <motion.form 
                     className="mx-auto max-w-lg rounded-xl border bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"

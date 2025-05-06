@@ -1,8 +1,9 @@
 'use client';
 import React from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field, ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 // Validation Schema
 const FeedbackSchema = Yup.object().shape({
@@ -20,20 +21,33 @@ const FeedbackSchema = Yup.object().shape({
 });
 
 const Feedback = () => {
-  const initialValues = {
-    fullName: "",
-    email: "",
-    comment: "",
-  };
 
-  const handleSubmit = (values, { resetForm }) => {
-    console.log("Submitted values:", values);
-    toast.success("Thank you for your feedback!");
-    resetForm();
-  };
+  const feebackForm = useFormik({
+    initialValues: {
+      fullName: "",
+      email: "",
+      message: "",
+    },
+    validationSchema: FeedbackSchema,
+    onSubmit: (values, { setSubmitting }) => {
+        axios.post(`${process.env.NEXT_PUBLIC_API_URL}/feedback/add`, values)
+        .then((result) => {
+          console.log(result.data);
+          toast.success("Feedback submitted successfully!");
+          setSubmitting(false);
+          feebackForm.resetForm();
+        }).catch((err) => {
+          console.log(err);
+          toast.error("Error submitting feedback. Please try again.");
+          setSubmitting(false);
+        });
+    },
 
+  })
+  
+  
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 animate-fadeIn">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 animate-fadeIn">
       <div className="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
         <div className="mx-auto max-w-2xl">
           <div className="text-center transform transition-all duration-300 hover:scale-105">
@@ -43,13 +57,7 @@ const Feedback = () => {
           </div>
 
           <div className="mt-5 p-4 bg-white bg-opacity-90 border border-gray-200 rounded-xl shadow-lg backdrop-blur-sm sm:mt-10 md:p-10 animate-slideUp">
-            <Formik
-              initialValues={initialValues}
-              validationSchema={FeedbackSchema}
-              onSubmit={handleSubmit}
-            >
-              {({ isSubmitting }) => (
-                <Form>
+                <form onSubmit={feebackForm.handleSubmit} className="space-y-4 sm:space-y-6">
                   <div className="mb-4 sm:mb-8 transition-all duration-300 transform hover:translate-x-1">
                     <label
                       htmlFor="fullName"
@@ -57,18 +65,20 @@ const Feedback = () => {
                     >
                       Full name
                     </label>
-                    <Field
+                    <input
                       type="text"
                       id="fullName"
                       name="fullName"
+                      value={feebackForm.values.fullName}
+                      onChange={feebackForm.handleChange}
                       className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
                       placeholder="Full name"
                     />
-                    <ErrorMessage
-                      name="fullName"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
+                    {
+                      feebackForm.touched.fullName && feebackForm.errors.fullName ? (
+                        <div className="text-sm text-red-600">{feebackForm.errors.fullName}</div>
+                      ): null
+                    }
                   </div>
 
                   <div className="mb-4 sm:mb-8 transition-all duration-300 transform hover:translate-x-1">
@@ -78,40 +88,45 @@ const Feedback = () => {
                     >
                       Email address
                     </label>
-                    <Field
+                    <input
                       type="email"
                       id="email"
                       name="email"
+                      value={feebackForm.values.email}
+                      onChange={feebackForm.handleChange}
                       className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
                       placeholder="Email address"
                     />
-                    <ErrorMessage
-                      name="email"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
+                    {
+                      feebackForm.touched.email && feebackForm.errors.email ? (
+                        <div className="text-sm text-red-600">{feebackForm.errors.email}</div>
+                      ): null
+                    }
                   </div>
 
                   <div className="transition-all duration-300 transform hover:translate-x-1">
                     <label
-                      htmlFor="comment"
+                      htmlFor="message"
                       className="block mb-2 text-sm font-medium text-gray-700"
                     >
-                      Comment
+                      
+                      Message
                     </label>
-                    <Field
-                      as="textarea"
-                      id="comment"
-                      name="comment"
+                    <input
+                      type="message"
+                      id="message"
+                      name="message"
+                      value={feebackForm.values.message}
+                      onChange={feebackForm.handleChange}
                       rows={3}
                       className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
                       placeholder="Leave your feedback here..."
                     />
-                    <ErrorMessage
-                      name="comment"
-                      component="div"
-                      className="text-red-500 text-sm mt-1"
-                    />
+                     {
+                      feebackForm.touched.message && feebackForm.errors.message? (
+                        <div className="text-sm text-red-600">{feebackForm.errors.message}</div>
+                      ): null
+                    }
                   </div>
 
                   <div className="mt-6 grid">
@@ -123,14 +138,11 @@ const Feedback = () => {
                       {isSubmitting ? "Submitting..." : "Submit Feedback"}
                     </button>
                   </div>
-                </Form>
-              )}
-            </Formik>
+                </form>
           </div>
         </div>
       </div>
     </div>
   );
 };
-
 export default Feedback;

@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const UserRouter = require('./routers/userRouter');
 const PPTRouter = require('./routers/pptRouter');
+const FeedbackRouter = require('./routers/feedbackRouter');
 const cors = require('cors');
 
 const app = express();
@@ -19,6 +20,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Routes
 app.use('/user', UserRouter);
 app.use('/api/ppt', PPTRouter);
+app.use('/feedback', FeedbackRouter);
 
 app.listen(port, () => {
     console.log(`Server started on port ${port}`);
