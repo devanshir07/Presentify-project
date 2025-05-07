@@ -288,7 +288,7 @@ router.post('/create-ppt', async (req, res) => {
         }
 
         // Initialize Gemini model for this request
-        const geminiModel = genAPI.getGenerativeModel({ model: "gemini-1.5-pro" });
+        const geminiModel = genAPI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         // Generate content for PPT using Gemini
         const prompt = `Create a professional and engaging presentation outline for the topic: "${topic}" with exactly ${numberOfSlides} slides.

@@ -4,7 +4,8 @@ import { useFormik } from 'formik';
 import React from 'react';
 import toast from 'react-hot-toast';
 import * as Yup from 'yup';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 const SignupSchema = Yup.object().shape({
     name: Yup.string()
@@ -24,6 +25,8 @@ const SignupSchema = Yup.object().shape({
 
 const Signup = () => {
 
+    const router = useRouter();
+
     const signupForm = useFormik({
         initialValues: {
             name: '',
@@ -39,6 +42,7 @@ const Signup = () => {
                 toast.success('Account created successfully');
                 console.log(res.status);
                 console.log(res.data);
+                router.push('/login');
             } catch (error) {
                 console.log(error);
                 toast.error('Something went wrong');

@@ -6,12 +6,12 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useApp } from '../../../contexts/AppContext';
 
 const Login = () => {
-
     const router = useRouter();
+    const { login } = useApp();
 
-    // Define validation schema with Yup
     const validationSchema = Yup.object({
         email: Yup.string()
             .email('Invalid email address')
@@ -21,7 +21,6 @@ const Login = () => {
             .required('Password is required')
     });
 
-    // Initialize Formik
     const formik = useFormik({
         initialValues: {
             email: '',
