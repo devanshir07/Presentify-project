@@ -1,6 +1,6 @@
 'use client';
 import React from "react";
-import Navbar from "./components/Navbar/page";
+import Navbar from "../components/Navbar/page";
 import { motion } from "framer-motion";
 
 const containerVariants = {
@@ -54,6 +54,8 @@ const testimonials = [
 
 const LandingPage = () => {
   return (
+    <>
+    <Navbar/>
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 relative overflow-hidden">
       {/* Animated background shapes */}
       <div className="absolute inset-0 overflow-hidden">
@@ -574,8 +576,10 @@ const LandingPage = () => {
         </motion.div>
       </section>
     </div>
+    </>
   );
 };
+
 
 // Add the required CSS animations
 const style = document.createElement('style');

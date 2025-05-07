@@ -1,9 +1,11 @@
 'use client';
 import React, { useState } from "react";
 import Link from "next/link";
+import { useApp } from "../../contexts/AppContext";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useApp();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -27,34 +29,33 @@ const Navbar = () => {
           >
             {isMenuOpen ? (
               <svg
+                className="w-6 h-6"
                 xmlns="http://www.w3.org/2000/svg"
-                width={24}
-                height={24}
-                viewBox="0 0 24 24"
                 fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
               >
-                <line x1={18} y1={6} x2={6} y2={18} />
-                <line x1={6} y1={6} x2={18} y2={18} />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             ) : (
               <svg
+                className="w-6 h-6"
                 xmlns="http://www.w3.org/2000/svg"
-                width={24}
-                height={24}
-                viewBox="0 0 24 24"
                 fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
               >
-                <line x1={3} y1={6} x2={21} y2={6} />
-                <line x1={3} y1={12} x2={21} y2={12} />
-                <line x1={3} y1={18} x2={21} y2={18} />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             )}
           </button>
@@ -116,18 +117,31 @@ const Navbar = () => {
           >
             Pricing
           </Link>
-          <Link
-            href="/login"
-            className="p-2 text-sm text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg"
-          >
-            Login
-          </Link>
-          <Link
-            href="/signup"
-            className="p-2 text-sm text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg"
-          >
-            Sign Up
-          </Link>
+          {user ? (
+            <>
+              <button
+                onClick={logout}
+                className="p-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="p-2 text-sm text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="p-2 text-sm text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </nav>
     </header>

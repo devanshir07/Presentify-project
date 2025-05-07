@@ -1,7 +1,6 @@
-const {Schema, model} = require('../connection');
+const {Schema, model, Types} = require('../connection');
 const feedbackSchema = new Schema({
-    name: {type: String, required: true},
-    email: {type: String, required:true},
+    userId: {type: Types.ObjectId, ref: 'user'},
     message: {type: String, required: true},
     createdAt: {type: Date, default: Date.now},
 })

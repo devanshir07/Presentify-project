@@ -4,7 +4,8 @@ import { useFormik } from 'formik';
 import React from 'react';
 import toast from 'react-hot-toast';
 import * as Yup from 'yup';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 const SignupSchema = Yup.object().shape({
     name: Yup.string()
@@ -24,6 +25,8 @@ const SignupSchema = Yup.object().shape({
 
 const Signup = () => {
 
+    const router = useRouter();
+
     const signupForm = useFormik({
         initialValues: {
             name: '',
@@ -39,16 +42,17 @@ const Signup = () => {
                 toast.success('Account created successfully');
                 console.log(res.status);
                 console.log(res.data);
+                router.push('/login');
             } catch (error) {
                 console.log(error);
                 toast.error('Something went wrong');
             }
         },
-        validationSchema: SignupSchema
+        
     });
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-8">
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 py-8">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -62,7 +66,7 @@ const Signup = () => {
                         transition={{ duration: 0.3 }}
                         className="text-center"
                     >
-                        <h1 className="block text-3xl font-bold text-gray-800 dark:text-white bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">PRESENTIFY</h1>
+                        <h1 className="block text-3xl font-bold text-gray-800 dark:text-white bg-gradient-to-r from-black bg-clip-text ">Sign Up</h1>
                     </motion.div>
 
                     <div className="mt-5">
