@@ -4,16 +4,11 @@ import { Formik, Form, Field, ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 // Validation Schema
 const FeedbackSchema = Yup.object().shape({
-  fullName: Yup.string()
-    .min(2, "Full name is too short")
-    .max(50, "Full name is too long")
-    .required("Full name is required"),
-  email: Yup.string()
-    .email("Invalid email address")
-    .required("Email is required"),
+
   message: Yup.string()
     .min(5, "Message is too short")
     .max(500, "Message is too long")
@@ -22,10 +17,14 @@ const FeedbackSchema = Yup.object().shape({
 
 const Feedback = () => {
 
+  const token = localStorage.getItem("token");
+  const decodedToken = jwtDecode(token);
+  const userId = decodedToken.name;
+  // console.log(userId);
+
   const feebackForm = useFormik({
     initialValues: {
-      fullName: "",
-      email: "",
+      userId: userId,
       message: "",
     },
     validationSchema: FeedbackSchema,
@@ -58,50 +57,24 @@ const Feedback = () => {
 
           <div className="mt-5 p-4 bg-white bg-opacity-90 border border-gray-200 rounded-xl shadow-lg backdrop-blur-sm sm:mt-10 md:p-10 animate-slideUp">
             <form onSubmit={feebackForm.handleSubmit} className="space-y-4 sm:space-y-6">
-              <div className="mb-4 sm:mb-8 transition-all duration-300 transform hover:translate-x-1">
-                <label
-                  htmlFor="fullName"
-                  className="block mb-2 text-sm font-medium text-gray-700"
-                >
-                  Full name
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  value={feebackForm.values.fullName}
-                  onChange={feebackForm.handleChange}
-                  className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
-                  placeholder="Full name"
-                />
-                {
-                  feebackForm.touched.fullName && feebackForm.errors.fullName ? (
-                    <div className="text-sm text-red-600">{feebackForm.errors.fullName}</div>
-                  ) : null
-                }
-              </div>
 
               <div className="mb-4 sm:mb-8 transition-all duration-300 transform hover:translate-x-1">
                 <label
                   htmlFor="email"
                   className="block mb-2 text-sm font-medium text-gray-700"
                 >
-                  Email address
+                  Name
                 </label>
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={feebackForm.values.email}
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={userId}
+                  disabled
                   onChange={feebackForm.handleChange}
                   className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
                   placeholder="Email address"
                 />
-                {
-                  feebackForm.touched.email && feebackForm.errors.email ? (
-                    <div className="text-sm text-red-600">{feebackForm.errors.email}</div>
-                  ) : null
-                }
               </div>
 
               <div className="transition-all duration-300 transform hover:translate-x-1">

@@ -31,8 +31,8 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       const [users, feedback, presentations] = await Promise.all([
-        axios.get('http://localhost:5000/api/users'),
-        axios.get('http://localhost:5000/api/feedback/getall'),
+        axios.get('http://localhost:5000/user/getall'),
+        axios.get('http://localhost:5000/feedback/getall'),
         axios.get('http://localhost:5000/api/ppt/getall')
       ]);
 

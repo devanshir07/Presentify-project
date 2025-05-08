@@ -12,7 +12,7 @@ import {
 
 const Sidebar = () => {
     const router = useRouter();
-    const [isActive, setIsActive] = useState('dashboard');
+    const [isActive, setIsActive] = useState(['dashboard','manage-users','manage-contact','manage-feedback']);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
