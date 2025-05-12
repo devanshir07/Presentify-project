@@ -1,8 +1,8 @@
+// 'use client';
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-import Navbar from "../components/Navbar/page";
-import { AppContextProvider } from "@/contexts/AppContext";
+import { AppProvider } from "@/contexts/AppContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,13 +25,11 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        
-        {/* <Navbar/> */}
-        <AppContextProvider>
-        <Toaster position="top-center"/>
-        {children}
-        </AppContextProvider>
+        <AppProvider>
+          <Toaster position="top-center"/>
+          {children}
+        </AppProvider>
       </body>
     </html>
-  )
+  );
 }

@@ -194,84 +194,137 @@ setInterval(cleanupOldFiles, 60 * 60 * 1000);
 
 // Add preview endpoint
 router.get("/preview/:filename", async (req, res) => {
-  try {
-    const filePath = path.join(uploadsDir, req.params.filename);
+  const filePath = path.join(uploadsDir, req.params.filename);
+  const outputPath = filePath.replace(".pptx", ".pdf");
 
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      console.log("File not found:", filePath);
-      return res
-        .status(404)
-        .json({ success: false, message: "File not found" });
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, message: "File not found" });
+  }
+
+  try {
+    // Check if PDF already exists and is newer than the PPTX file
+    const pptxStats = fs.statSync(filePath);
+    let needsConversion = true;
+    
+    if (fs.existsSync(outputPath)) {
+      const pdfStats = fs.statSync(outputPath);
+      // Only reconvert if PPTX is newer than PDF
+      if (pdfStats.mtimeMs >= pptxStats.mtimeMs) {
+        needsConversion = false;
+      }
+    }
+    
+    // Convert if needed
+    if (needsConversion) {
+      const pptData = fs.readFileSync(filePath);
+      const pdfData = await convertAsync(pptData, ".pdf", undefined);
+      fs.writeFileSync(outputPath, pdfData);
     }
 
-    const outputPath = path.join(
-      uploadsDir,
-      `preview_${req.params.filename.replace(".pptx", ".pdf")}`
+    // Set proper cache control headers
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${path.basename(outputPath)}"`
     );
+    
+    // Send file
+    res.sendFile(outputPath, { root: path.dirname(outputPath) });
+  } catch (error) {
+    console.error("LibreOffice preview error:", error.message);
+    res.status(500).json({ success: false, message: "Preview failed", error: error.message });
+  }
+});
 
-    // Use PowerPoint to convert PPTX to PDF
-    const powershellScript = `
-    $PowerPoint = New-Object -ComObject PowerPoint.Application
-    $Presentation = $PowerPoint.Presentations.Open("${filePath}")
-    $Presentation.SaveAs("${outputPath}", 32)
-    $Presentation.Close()
-    $PowerPoint.Quit()
-    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($Presentation)
-    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($PowerPoint)
-    [System.GC]::Collect()
-    [System.GC]::WaitForPendingFinalizers()
-        `;
+// Add endpoint to extract content from PPT
+router.get("/get-content/:filename", async (req, res) => {
+  const filePath = path.join(uploadsDir, req.params.filename);
 
-    const ps = spawn("powershell.exe", ["-Command", powershellScript]);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, message: "File not found" });
+  }
 
-    ps.on("exit", (code) => {
-      if (code !== 0) {
-        console.error("PowerPoint conversion failed");
-        return res
-          .status(500)
-          .json({ success: false, message: "Conversion failed" });
-      }
+  try {
+    // This is a simplified approach. For production, you would need
+    // a proper PPT parsing library that can extract text content
+    // For now, we'll return placeholder data
+    
+    // Mock data - in a real implementation, you would extract this from the PPT
+    const slides = [
+      "Content for slide 1",
+      "Content for slide 2", 
+      "Content for slide 3"
+    ];
+    
+    res.json({
+      success: true,
+      slides: slides
+    });
+  } catch (error) {
+    console.error("Error extracting content:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to extract content",
+      error: error.message
+    });
+  }
+});
 
-      // Set response headers for PDF
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        `inline; filename="preview_${req.params.filename.replace(
-          ".pptx",
-          ".pdf"
-        )}"`
-      );
+// Fix the edit-ppt endpoint to use POST instead of PUT
+router.post("/edit-ppt", async (req, res) => {
+  const { filename, slides } = req.body;
 
-      // Send PDF file
-      const absolutePath = path.resolve(outputPath);
-      res.sendFile(absolutePath, {}, (err) => {
-        if (err) {
-          console.error("Error sending file:", err);
-        }
-        // Clean up PDF file after sending
-        setTimeout(() => {
-          try {
-            if (fs.existsSync(outputPath)) {
-              fs.unlinkSync(outputPath);
-              console.log("Cleaned up PDF file:", outputPath);
-            }
-          } catch (unlinkError) {
-            console.error("Error cleaning up PDF:", unlinkError);
-          }
-        }, 1000);
+  if (!filename || !slides || !Array.isArray(slides)) {
+    return res.status(400).json({ success: false, message: "Invalid input" });
+  }
+
+  try {
+    const pres = new pptxgen();
+    pres.layout = "LAYOUT_16x9";
+
+    slides.forEach((slideText, index) => {
+      const slide = pres.addSlide();
+      slide.background = { color: "#1F2937" };
+
+      slide.addText(`Slide ${index + 1}`, {
+        x: 0.5,
+        y: 0.3,
+        w: "90%",
+        h: 1,
+        fontSize: 26,
+        bold: true,
+        color: "#FFFFFF",
+      });
+
+      slide.addText(slideText || "No content provided", {
+        x: 0.7,
+        y: 1.5,
+        w: "90%",
+        h: 4.5,
+        fontSize: 18,
+        color: "#F3F4F6",
       });
     });
 
-    ps.stderr.on("data", (data) => {
-      console.error(`PowerShell Error: ${data}`);
-    });
-  } catch (error) {
-    console.error("Error in preview endpoint:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error generating preview",
-      error: error.message,
+    const savePath = path.join(uploadsDir, filename);
+    await pres.writeFile(savePath);
+
+    // Delete any existing PDF (it will be regenerated on next preview request)
+    const pdfPath = savePath.replace(".pptx", ".pdf");
+    if (fs.existsSync(pdfPath)) {
+      fs.unlinkSync(pdfPath);
+    }
+
+    res.json({ success: true, message: "Presentation updated!", fileName: filename });
+  } catch (err) {
+    console.error("Edit PPT Error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to update PPT",
+      error: err.message 
     });
   }
 });
@@ -588,7 +641,7 @@ Format the response strictly as JSON with this structure:
     // Save PPT in uploads directory
     const fileName = `${topic.replace(/[^a-zA-Z0-9]/g, "_")}_presentation.pptx`;
     const filePath = path.join(uploadsDir, fileName);
-    await pres.writeFile({ fileName: filePath });
+    await pres.writeFile(filePath);
 
     // Clean up temporary image files
     tempImages.forEach((imagePath) => {
@@ -600,6 +653,19 @@ Format the response strictly as JSON with this structure:
         console.error("Error cleaning up image:", error);
       }
     });
+
+    // Save presentation record to database
+    try {
+      const newPresentation = new Model({
+        title: topic,
+        slides: pptContent.slides.length,
+        createdAt: new Date()
+      });
+      await newPresentation.save();
+    } catch (dbError) {
+      console.error("Error saving to database:", dbError);
+      // Continue execution even if DB save fails
+    }
 
     res.json({
       success: true,

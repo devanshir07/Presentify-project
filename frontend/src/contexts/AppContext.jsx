@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 
 const AppContext = createContext();
 
-export function AppContextProvider({ children }) {
+export function AppProvider({ children }) {
   const [user, setUser] = useState(null);
   const router = useRouter();
 
