@@ -6,6 +6,11 @@ require('dotenv').config();
 
 router.post('/add', (req, res) => {
     console.log(req.body);
+
+    const { name, message } = req.body;
+    if (!name || !message) {
+        return res.status(400).json({ message: 'User ID and message are required' });
+    }
     
     new Model(req.body).save()
         .then((result) => {
