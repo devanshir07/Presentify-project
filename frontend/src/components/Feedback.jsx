@@ -19,12 +19,12 @@ const Feedback = () => {
 
   const token = localStorage.getItem("token");
   const decodedToken = jwtDecode(token);
-  const userId = decodedToken.name;
-  // console.log(userId);
+  const userName = decodedToken.name;
+  console.log(name);
 
   const feebackForm = useFormik({
     initialValues: {
-      userId: userId,
+      name: userName,
       message: "",
     },
     validationSchema: FeedbackSchema,
@@ -69,7 +69,7 @@ const Feedback = () => {
                   type="text"
                   id="name"
                   name="name"
-                  value={userId}
+                  value={userName}
                   disabled
                   onChange={feebackForm.handleChange}
                   className="py-2.5 sm:py-3 px-4 block w-full border-gray-200 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
