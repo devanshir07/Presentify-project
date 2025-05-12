@@ -1,6 +1,6 @@
 'use client';
 import React from "react";
-import Navbar from "../components/Navbar/page";
+import Navbar from "../components/Navbar";
 import { motion } from "framer-motion";
 
 const containerVariants = {
