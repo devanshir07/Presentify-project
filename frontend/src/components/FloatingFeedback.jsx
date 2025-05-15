@@ -24,7 +24,10 @@ const FloatingFeedback = () => {
     const { user } = useApp();
 
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
+    if (!token) {
+        return null;
+    }
     const decodedToken = jwtDecode(token);
     const userName = decodedToken.name;
 

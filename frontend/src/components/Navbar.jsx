@@ -22,7 +22,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 flex flex-wrap w-full bg-white border-b border-gray-200 shadow-sm dark:bg-neutral-800 dark:border-neutral-700">
+    <header className="fixed top-0 z-[10] mb-5 flex flex-wrap w-full bg-white border-b border-gray-200 shadow-sm dark:bg-neutral-800 dark:border-neutral-700">
       <nav className="relative max-w-7xl w-full mx-auto md:flex md:items-center md:justify-between py-3 px-4 lg:px-8">
         {/* Logo and mobile menu button */}
         <div className="flex justify-between items-center">
@@ -126,10 +126,10 @@ const Navbar = () => {
             </div>
 
             <Link
-              href="/pricing"
+              href="/about"
               className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors"
             >
-              Pricing
+              About
             </Link>
             
             <Link

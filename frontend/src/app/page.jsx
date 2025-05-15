@@ -139,11 +139,6 @@ const LandingPage = () => {
                 icon: "✨"
               },
               {
-                title: "Real-time Collaboration",
-                description: "Work together with your team in real-time, making edits and sharing feedback",
-                icon: "👥"
-              },
-              {
                 title: "Advanced Design Tools",
                 description: "Access powerful design features with an intuitive interface anyone can use",
                 icon: "🎨"
@@ -153,11 +148,6 @@ const LandingPage = () => {
                 description: "Export your presentations in multiple formats including PowerPoint and PDF",
                 icon: "💾"
               },
-              {
-                title: "Smart Integration",
-                description: "Connect with your favorite tools and import content from various sources",
-                icon: "🔄"
-              }
             ].map((feature, index) => (
               <motion.div
                 key={index}

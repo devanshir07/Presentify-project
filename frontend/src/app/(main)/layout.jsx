@@ -27,7 +27,7 @@ export default function mainLayout({ children }) {
         
         <Navbar/>
 
-        <Toaster position="top-center"/>
+        {/* <Toaster position="top-center"/> */}
         {children}
         {/* <Sidebar/> */}
       </body>
