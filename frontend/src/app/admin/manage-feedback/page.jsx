@@ -82,7 +82,7 @@ const ManageFeedback = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">
                       {format(new Date(feedback.createdAt), 'MMM dd, yyyy')}
-                    </div>
+                    </div>  
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-500">
