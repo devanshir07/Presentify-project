@@ -2,6 +2,7 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -97,11 +98,11 @@ const LandingPage = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="flex gap-6"
         >
-          <a href="../create-ppt">
+          <Link href="/create-ppt">
           <button className="bg-gradient-to-r from-blue-600 to-teal-500 text-white hover:opacity-90 px-8 py-4 text-lg font-semibold rounded-full shadow-lg transform hover:scale-105 transition-all duration-200">
             Generate from Prompt
           </button>
-          </a>
+          </Link>
           <button className="bg-white text-gray-800 hover:bg-gray-50 px-8 py-4 text-lg font-semibold rounded-full shadow-lg border-2 border-gray-100 transform hover:scale-105 transition-all duration-200">
             Import Document
           </button>

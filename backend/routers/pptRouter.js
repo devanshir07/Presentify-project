@@ -10,9 +10,21 @@ const libre = require("libreoffice-convert");
 const util = require("util");
 const { spawn } = require("child_process");
 const axios = require("axios");
+const crypto = require('crypto');
 
 const genAPI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const convertAsync = util.promisify(libre.convert);
+
+
+
+
+function ensureCorrectUrlFormat(url) {
+  // Make sure URL doesn't have double slashes (except after protocol)
+  return url.replace(/(https?:\/\/)|(\/)+/g, function(match, protocol) {
+    if (protocol) return protocol;
+    return '/';
+  });
+}
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, "..", "uploads");
@@ -194,48 +206,54 @@ setInterval(cleanupOldFiles, 60 * 60 * 1000);
 
 // Add preview endpoint
 router.get("/preview/:filename", async (req, res) => {
-  const filePath = path.join(uploadsDir, req.params.filename);
-  const outputPath = filePath.replace(".pptx", ".pdf");
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ success: false, message: "File not found" });
-  }
-
   try {
-    // Check if PDF already exists and is newer than the PPTX file
-    const pptxStats = fs.statSync(filePath);
-    let needsConversion = true;
-    
-    if (fs.existsSync(outputPath)) {
-      const pdfStats = fs.statSync(outputPath);
-      // Only reconvert if PPTX is newer than PDF
-      if (pdfStats.mtimeMs >= pptxStats.mtimeMs) {
-        needsConversion = false;
-      }
-    }
-    
-    // Convert if needed
-    if (needsConversion) {
-      const pptData = fs.readFileSync(filePath);
-      const pdfData = await convertAsync(pptData, ".pdf", undefined);
-      fs.writeFileSync(outputPath, pdfData);
+    const filePath = path.join(uploadsDir, req.params.filename);
+    const outputPath = filePath.replace(".pptx", ".pdf");
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, message: "File not found" });
     }
 
-    // Set proper cache control headers
+    // Always convert to ensure fresh PDF
+    try {
+      const pptxBuffer = fs.readFileSync(filePath);
+      const pdfBuffer = await convertAsync(pptxBuffer, '.pdf', undefined);
+      fs.writeFileSync(outputPath, pdfBuffer);
+      console.log("PDF conversion successful");
+    } catch (conversionError) {
+      console.error("PDF conversion error:", conversionError);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Failed to convert PPT to PDF" 
+      });
+    }
+
+    // Set proper headers for PDF preview
     res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline");
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
-    res.setHeader(
-      "Content-Disposition",
-      `inline; filename="${path.basename(outputPath)}"`
-    );
-    
-    // Send file
-    res.sendFile(outputPath, { root: path.dirname(outputPath) });
+
+    // Stream the PDF file
+    const fileStream = fs.createReadStream(outputPath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (err) => {
+      console.error("Error streaming PDF:", err);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, message: "Error streaming PDF" });
+      }
+    });
   } catch (error) {
-    console.error("LibreOffice preview error:", error.message);
-    res.status(500).json({ success: false, message: "Preview failed", error: error.message });
+    console.error("Preview error:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        success: false, 
+        message: "Preview failed", 
+        error: error.message 
+      });
+    }
   }
 });
 
@@ -328,7 +346,7 @@ router.post("/edit-ppt", async (req, res) => {
     });
   }
 });
-
+  
 // Add download endpoint
 router.get("/download/:filename", (req, res) => {
   try {
@@ -341,18 +359,34 @@ router.get("/download/:filename", (req, res) => {
         .json({ success: false, message: "File not found" });
     }
 
-    // Send the file for download
-    res.download(filePath, (err) => {
-      if (err) {
-        console.error("Error downloading file:", err);
-        return res
-          .status(500)
-          .json({ success: false, message: "Error downloading file" });
+    // Set proper headers for PPT file
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+    res.setHeader("Content-Disposition", "inline; filename=" + req.params.filename);
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    
+    // Add CORS headers for Microsoft Office Online
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+
+    // Create read stream and pipe to response
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    fileStream.on('error', (err) => {
+      console.error("Error streaming file:", err);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, message: "Error streaming file" });
       }
     });
   } catch (error) {
-    console.error("Error downloading file:", error);
-    res.status(500).json({ success: false, message: "Error downloading file" });
+    console.error("Error handling file:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: "Error handling file" });
+    }
   }
 });
 
@@ -641,7 +675,7 @@ Format the response strictly as JSON with this structure:
     // Save PPT in uploads directory
     const fileName = `${topic.replace(/[^a-zA-Z0-9]/g, "_")}_presentation.pptx`;
     const filePath = path.join(uploadsDir, fileName);
-    await pres.writeFile(filePath);
+    await pres.writeFile({ fileName: filePath });
 
     // Clean up temporary image files
     tempImages.forEach((imagePath) => {
@@ -659,7 +693,8 @@ Format the response strictly as JSON with this structure:
       const newPresentation = new Model({
         title: topic,
         slides: pptContent.slides.length,
-        createdAt: new Date()
+        createdAt: new Date(),
+        fileName: fileName  // Add the fileName field
       });
       await newPresentation.save();
     } catch (dbError) {

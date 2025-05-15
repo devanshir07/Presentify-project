@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "copy-webviewer": "node scripts/copy-webviewer.js",
+    "postinstall": "npm run copy-webviewer"
   },
   "dependencies": {
+    "@pdftron/webviewer": "^11.4.0",
     "@react-pdf-viewer/core": "^3.12.0",
     "@react-pdf-viewer/default-layout": "^3.12.0",
     "axios": "^1.8.4",
