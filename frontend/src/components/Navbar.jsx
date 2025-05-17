@@ -126,7 +126,7 @@ const Navbar = () => {
             </div>
 
             <Link
-              href="/about"
+              href="../about"
               className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors"
             >
               About

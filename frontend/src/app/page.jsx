@@ -99,11 +99,11 @@ const LandingPage = () => {
         >
           <a href="../create-ppt">
           <button className="bg-gradient-to-r from-blue-600 to-teal-500 text-white hover:opacity-90 px-8 py-4 text-lg font-semibold rounded-full shadow-lg transform hover:scale-105 transition-all duration-200">
-            Generate from Prompt
+            Start for Free
           </button>
           </a>
           <button className="bg-white text-gray-800 hover:bg-gray-50 px-8 py-4 text-lg font-semibold rounded-full shadow-lg border-2 border-gray-100 transform hover:scale-105 transition-all duration-200">
-            Import Document
+           Watch Demo
           </button>
         </motion.div>
       </motion.section>
@@ -522,48 +522,6 @@ const LandingPage = () => {
           <div className="absolute top-0 left-1/4 w-64 h-64 bg-blue-200/50 rounded-full mix-blend-multiply filter blur-3xl"></div>
           <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-blue-300/50 rounded-full mix-blend-multiply filter blur-3xl"></div>
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="container mx-auto text-center relative z-10"
-        >
-          <span className="inline-block px-4 py-2 bg-blue-100 text-blue-600 rounded-full text-sm font-semibold mb-6">
-            Start Creating Today
-          </span>
-          <h2 className="text-5xl font-bold mb-6 text-gray-800 max-w-3xl mx-auto leading-tight">
-            Transform Your Ideas Into <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">Professional</span> Presentations
-          </h2>
-          <p className="text-gray-600 text-xl mb-10 max-w-2xl mx-auto">
-            Join over 10,000+ professionals who are creating stunning presentations in minutes with our AI-powered platform
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="../signup">
-            <button className="bg-gradient-to-r from-blue-600 to-teal-500 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg transform hover:scale-105 transition-all duration-200 w-full sm:w-auto">
-              Start Creating for Free
-            </button>
-            </a>
-            <button className="bg-white text-gray-800 border-2 border-gray-200 px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 w-full sm:w-auto">
-              Watch Demo
-            </button>
-          </div>
-          <div className="mt-12 flex items-center justify-center gap-8 text-gray-600">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              <span>No Credit Card Required</span>
-            </div>
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              <span>7-Day Free Trial</span>
-            </div>
-          </div>
-        </motion.div>
       </section>
     </div>
     </>
