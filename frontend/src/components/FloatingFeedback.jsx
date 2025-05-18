@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useApp } from '../contexts/AppContext';
@@ -20,16 +20,17 @@ const FeedbackSchema = Yup.object().shape({
 const FloatingFeedback = () => {
     const [isHovered, setIsHovered] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [userName, setUserName] = useState('');
     const router = useRouter();
     const { user } = useApp();
 
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-        return null;
-    }
-    const decodedToken = jwtDecode(token);
-    const userName = decodedToken.name;
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            const decodedToken = jwtDecode(token);
+            setUserName(decodedToken.name);
+        }
+    }, []);
 
     const feedbackForm = useFormik({
         initialValues: {
@@ -52,6 +53,7 @@ const FloatingFeedback = () => {
                 toast.error("Error submitting feedback. Please try again.");
             }
         },
+        enableReinitialize: true, // This ensures form updates when userName changes
     });
 
     const handleClick = () => {
@@ -61,6 +63,11 @@ const FloatingFeedback = () => {
             setIsModalOpen(true);
         }
     };
+
+    if (!user) {
+        return null;
+    }
+
     return (
         <>
             <div className="fixed bottom-8 right-8 z-50">
