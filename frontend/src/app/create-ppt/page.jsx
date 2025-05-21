@@ -1,9 +1,22 @@
 'use client';
-import { useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import PptViewer from '@/components/PptViewer';
+import { Worker, Viewer } from '@react-pdf-viewer/core';
+import '@react-pdf-viewer/core/lib/styles/index.css';
+import { useRouter } from 'next/navigation';
 
 export default function CreatePPT() {
+
+
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.push('/login');
+        }
+    },[])
+
     const [formData, setFormData] = useState({
         topic: '',
         numberOfSlides: '5',

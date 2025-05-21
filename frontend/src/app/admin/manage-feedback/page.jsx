@@ -68,7 +68,6 @@ const ManageFeedback = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -78,15 +77,12 @@ const ManageFeedback = () => {
               {filteredFeedbacks.map((feedback) => (
                 <tr key={feedback._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{feedback.fullName}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{feedback.email}</div>
+                    <div className="text-sm font-medium text-gray-900">{feedback.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-500">
                       {format(new Date(feedback.createdAt), 'MMM dd, yyyy')}
-                    </div>
+                    </div>  
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-500">
