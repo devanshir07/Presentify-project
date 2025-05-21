@@ -62,7 +62,7 @@ const Login = () => {
                     Login
                 </motion.h2>
                 <motion.form 
-                    className="mx-auto max-w-lg rounded-xl border bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="mx-auto max-w-sm rounded-xl border bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
                     onSubmit={formik.handleSubmit}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -136,7 +136,7 @@ const Login = () => {
                             {formik.isSubmitting ? 'Logging in...' : 'Log in'}
                         </motion.button>
                         
-                        <motion.div 
+                        {/* <motion.div 
                             className="relative flex items-center justify-center"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -147,8 +147,8 @@ const Login = () => {
                                 Log in with social
                             </span>
                         </motion.div>
-                        
-                        <motion.div
+                         */}
+                        {/* <motion.div
                             className="space-y-3"
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
@@ -169,7 +169,7 @@ const Login = () => {
                                 </svg>
                                 Continue with Google
                             </button>
-                        </motion.div>
+                        </motion.div> */}
                     </div>
                     
                     <motion.div 

@@ -2,8 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
-import Navbar from "../components/Navbar/page";
-import { AppContextProvider } from "@/contexts/AppContext";
+import { AppProvider } from "@/contexts/AppContext";
 import FloatingFeedback from "@/components/FloatingFeedback";
 
 const geistSans = Geist({
@@ -29,11 +28,11 @@ export default function RootLayout({ children }) {
       >
         
         {/* <Navbar/> */}
-        <AppContextProvider>
+        <AppProvider>
         <Toaster position="top-center"/>
         {children}
         <FloatingFeedback />
-        </AppContextProvider>
+        </AppProvider>
       </body>
     </html>
   );

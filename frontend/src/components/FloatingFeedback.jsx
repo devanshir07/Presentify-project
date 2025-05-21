@@ -23,10 +23,13 @@ const FloatingFeedback = () => {
     const router = useRouter();
     const { user } = useApp();
 
-
-    const token = localStorage.getItem("token");
-    const decodedToken = jwtDecode(token);
-    const userName = decodedToken.name;
+    let decodedToken
+    let userName;
+    const token = localStorage.getItem('token');
+    if(token){
+        decodedToken = jwtDecode(token);
+        userName = decodedToken.name;
+    } 
 
     const feedbackForm = useFormik({
         initialValues: {

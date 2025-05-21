@@ -102,9 +102,9 @@ const LandingPage = () => {
             Generate from Prompt
           </button>
           </a>
-          <button className="bg-white text-gray-800 hover:bg-gray-50 px-8 py-4 text-lg font-semibold rounded-full shadow-lg border-2 border-gray-100 transform hover:scale-105 transition-all duration-200">
+          {/* <button className="bg-white text-gray-800 hover:bg-gray-50 px-8 py-4 text-lg font-semibold rounded-full shadow-lg border-2 border-gray-100 transform hover:scale-105 transition-all duration-200">
             Import Document
-          </button>
+          </button> */}
         </motion.div>
       </motion.section>
 
