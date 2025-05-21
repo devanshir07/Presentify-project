@@ -5,13 +5,16 @@ module.exports = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  theme: {
-    extend: {
+  theme: {    extend: {
       animation: {
         blob: "blob 7s infinite",
         fadeIn: 'fadeIn 0.5s ease-in-out',
         slideDown: 'slideDown 0.5s ease-out',
         slideUp: 'slideUp 0.5s ease-out',
+      },
+      animationDelay: {
+        2000: '2s',
+        4000: '4s',
       },
       keyframes: {
         blob: {

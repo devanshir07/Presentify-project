@@ -19,59 +19,48 @@ const SignupSchema = Yup.object().shape({
         .matches(/[A-Z]/, 'Uppercase letter is required')
         .matches(/[0-9]/, 'Number is required')
         .matches(/\W/, 'Special character is required'),
-    confirmPassword: Yup.string().required('Confirm Password is required')
-        .oneOf([Yup.ref('password'), null], 'Passwords must match')
 });
 
 const Signup = () => {
 
-    const router = useRouter();
-
-    const signupForm = useFormik({
+    const router = useRouter();   
+     const signupForm = useFormik({
         initialValues: {
             name: '',
             email: '',
             password: '',
-            confirmPassword: ''
+            
         },
+        validationSchema: SignupSchema,
         onSubmit: async (values) => {
-            console.log(values);
-
             try {
                 const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/user/add`, values);
                 toast.success('Account created successfully');
-                console.log(res.status);
-                console.log(res.data);
                 router.push('/login');
             } catch (error) {
-                console.log(error);
-                toast.error('Something went wrong');
+                console.error('Signup error:', error);
+                toast.error(error.response?.data?.message || 'Failed to create account');
             }
-        },
-        
-    });
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 py-8">
+        }
+    });    return (
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50 flex items-center justify-center py-8 px-4">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="max-w-lg mx-auto mt-7 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 dark:bg-neutral-900/90 dark:border-neutral-700"
-            >
-                <div className="p-4 sm:p-7">
+                className="w-full max-w-[420px] bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 dark:bg-neutral-900/90 dark:border-neutral-700">
+                <div className="p-5">
                     <motion.div 
                         initial={{ scale: 0.9 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: 0.3 }}
                         className="text-center"
                     >
-                        <h1 className="block text-3xl font-bold text-gray-800 dark:text-white bg-gradient-to-r from-black bg-clip-text ">Sign Up</h1>
-                    </motion.div>
-
-                    <div className="mt-5">
+                        <h1 className="block text-2xl font-bold text-gray-800 dark:text-white bg-gradient-to-r from-black bg-clip-text">Sign Up</h1>
+                    </motion.div>                   
+                     <div className="mt-3">
                         <form onSubmit={signupForm.handleSubmit}>
-                            <div className="grid gap-y-4">
+                            <div className="grid gap-y-2.5">
                                 <motion.div
                                     initial={{ x: -20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
@@ -125,25 +114,6 @@ const Signup = () => {
                                         )
                                     }
                                 </motion.div>
-
-                                <motion.div
-                                    initial={{ x: -20, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: 0.4 }}
-                                >
-                                    <label htmlFor="confirm-password" className="block text-sm mb-2 dark:text-white">Confirm Password</label>
-                                    <input type="password"
-                                        id="confirmPassword"
-                                        onChange={signupForm.handleChange}
-                                        value={signupForm.values.confirmPassword}
-                                        className="py-2.5 sm:py-3 px-4 block w-full border-2 border-gray-300 rounded-lg sm:text-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400" />
-                                    {
-                                        (signupForm.touched.confirmPassword && signupForm.errors.confirmPassword) && (
-                                            <p className="text-xs text-red-600 mt-2">{signupForm.errors.confirmPassword}</p>
-                                        )
-                                    }
-                                </motion.div>
-
                                 <motion.div 
                                     initial={{ x: -20, opacity: 0 }}
                                     animate={{ x: 0, opacity: 1 }}
@@ -152,15 +122,14 @@ const Signup = () => {
                                 >
                                     <input id="terms" name="terms" type="checkbox" className="shrink-0 mt-0.5 border-gray-300 rounded-sm text-blue-600 focus:ring-blue-500 dark:bg-neutral-800 dark:border-neutral-700" />
                                     <label htmlFor="terms" className="ms-3 text-sm dark:text-white">I accept the <a className="text-blue-600 hover:underline font-medium dark:text-blue-500" href="#">Terms and Conditions</a></label>
-                                </motion.div>
-
-                                <motion.div 
+                                </motion.div>                               
+                                 <motion.div 
                                     initial={{ y: 20, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.6 }}
-                                    className="mt-4"
+                                    className="mt-3"
                                 >
-                                    <button type="submit" className="w-full py-3 px-4 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg hover:from-blue-700 hover:to-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200">
+                                    <button type="submit" className="w-full py-2.5 px-4 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg hover:from-blue-700 hover:to-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200">
                                         Sign up
                                     </button>
                                 </motion.div>

@@ -213,6 +213,9 @@ router.get("/preview/:filename", async (req, res) => {
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ success: false, message: "File not found" });
     }
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, message: "File not found" });
+    }
 
     // Always convert to ensure fresh PDF
     try {
@@ -402,31 +405,41 @@ router.get("/getall", (req, res) => {
     });
 });
 
+// Modify the create-ppt endpoint
+
 router.post("/create-ppt", async (req, res) => {
-  try {
-    const { topic, numberOfSlides, additionalInfo } = req.body;
+    try {
+        const { topic, numberOfSlides, additionalInfo, userId, title, description } = req.body;
 
-    // Validate input
-    if (
-      !topic ||
-      !numberOfSlides ||
-      numberOfSlides < 1 ||
-      numberOfSlides > 50
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Invalid input. Topic is required and number of slides must be between 1 and 50.",
-      });
-    }
+        // Validate user ID
+        // if (!userId) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: "User ID is required"
+        //     });
+        // }
 
-    // Initialize Gemini model for this request
-    const geminiModel = genAPI.getGenerativeModel({
-      model: "gemini-2.0-flash",
-    });
+        // Validate input
+        if (
+            !topic ||
+            !numberOfSlides ||
+            numberOfSlides < 1 ||
+            numberOfSlides > 50
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Invalid input. Topic is required and number of slides must be between 1 and 50.",
+            });
+        }
 
-    // Generate content for PPT using Gemini
-    const prompt = `Create a professional and engaging presentation outline for the topic: "${topic}" with exactly ${numberOfSlides} slides.
+        // Initialize Gemini model for this request
+        const geminiModel = genAPI.getGenerativeModel({
+            model: "gemini-2.0-flash",
+        });
+
+        // Generate content for PPT using Gemini
+        const prompt = `Create a professional and engaging presentation outline for the topic: "${topic}" with exactly ${numberOfSlides} slides.
 Additional requirements: ${additionalInfo || "None"}.
 
 Please follow these guidelines:
@@ -503,190 +516,190 @@ Format the response strictly as JSON with this structure:
   ]
 }`;
 
-    const result = await geminiModel.generateContent(prompt);
-    const response = await result.response;
-    let responseText = response.text();
+        const result = await geminiModel.generateContent(prompt);
+        const response = await result.response;
+        let responseText = response.text();
 
-    // Clean up the response text by removing markdown formatting if present
-    if (responseText.includes("```")) {
-      responseText = responseText
-        .replace(/```json\n?/g, "")
-        .replace(/```\n?/g, "")
-        .trim();
-    }
-
-    const pptContent = JSON.parse(responseText);
-
-    // Create PPT
-    const pres = new pptxgen();
-
-    // Configure default slide size (16:9)
-    pres.layout = "LAYOUT_16x9";
-
-    // Set presentation theme with proper contrast
-    const theme = pptContent.theme;
-    const defaultTheme = {
-      primary: "#000000", // Black background
-      accent: "#FFFFFF", // White accent
-      textPrimary: "#FFFFFF", // White text
-      textSecondary: "#E5E7EB", // Light gray text
-      background: {
-        light: "#333333", // Dark gray
-        dark: "#000000", // Pure black
-      },
-    };
-
-    // Use theme colors from API response or force dark theme
-    pres.theme = {
-      background: { color: defaultTheme.primary }, // Force black background
-      title: {
-        color: defaultTheme.textPrimary, // White text for titles
-        fontSize: 44,
-      },
-      body: {
-        color: defaultTheme.textPrimary, // White text for body
-        fontSize: 18,
-      },
-    };
-
-    // Keep track of temporary image files
-    const tempImages = [];
-
-    // Modify slide creation to ensure dark theme compatibility
-    // Replace inside the for-loop where slides are added
-    for (let i = 0; i < pptContent.slides.length; i++) {
-      const slide = pptContent.slides[i];
-      const newSlide = pres.addSlide();
-      newSlide.background = { color: defaultTheme.primary };
-
-      // Title zone
-      newSlide.addText(slide.title, {
-        x: "5%",
-        y: "5%",
-        w: "90%",
-        h: "15%",
-        fontSize: 32,
-        bold: true,
-        color: defaultTheme.textPrimary,
-        align: "left",
-      });
-
-      const layout = slide.imageLayout || {};
-      const contentPos = layout.contentPosition || "left";
-      const textOpts = {
-        y: "25%",
-        h: "60%",
-        fontSize: 18,
-        color: defaultTheme.textPrimary,
-        bullet: {
-          type: "bullet",
-          indent: 15,
-          style: { type: "solid", color: defaultTheme.textPrimary },
-        },
-        bulletFont: { name: "Arial", size: 10 },
-        paraSpaceAfter: 20,
-        paraSpaceBefore: 5,
-        lineSpacing: 1.5,
-        indentLevel: 0,
-        margin: [0, 0, 15, 0],
-        breakLine: true,
-      };
-
-      // Layout logic based on contentPosition
-      if (contentPos === "left") {
-        textOpts.x = "5%";
-        textOpts.w = "45%";
-      } else if (contentPos === "right") {
-        textOpts.x = "50%";
-        textOpts.w = "45%";
-      } else if (contentPos === "bottom") {
-        textOpts.x = "5%";
-        textOpts.y = "60%";
-        textOpts.w = "90%";
-        textOpts.h = "30%";
-      } else {
-        textOpts.x = "5%";
-        textOpts.w = "90%";
-      }
-
-      if (slide.content && slide.content.length > 0) {
-        const bulletParagraphs = slide.content.map((line) => ({
-          text: line,
-          options: {
-            bullet: true,
-            fontSize: 18,
-            color: defaultTheme.textPrimary,
-            paraSpaceAfter: 10,
-          },
-        }));
-        newSlide.addText(bulletParagraphs, {
-          x: textOpts.x,
-          y: textOpts.y,
-          w: textOpts.w,
-          h: textOpts.h,
-        });
-      }
-
-      // Add image if present
-      if (slide.imageKeywords && slide.imageKeywords.length > 0) {
-        const imagePromises = slide.imageKeywords.map((keyword) =>
-          downloadImage(keyword, topic)
-        );
-        const imageResults = await Promise.all(imagePromises);
-        const validImages = imageResults.filter(
-          (result) => result && result.path
-        );
-
-        if (validImages.length > 0) {
-          const imagePath = validImages[0].path;
-          const imageOpts = {
-            path: imagePath,
-            sizing: { type: "contain", w: "40%", h: "50%" },
-          };
-
-          if (contentPos === "left") {
-            imageOpts.x = "50%";
-            imageOpts.y = "25%";
-            imageOpts.w = "40%";
-            imageOpts.h = "50%";
-          } else if (contentPos === "right") {
-            imageOpts.x = "5%";
-            imageOpts.y = "25%";
-            imageOpts.w = "40%";
-            imageOpts.h = "50%";
-          } else if (contentPos === "bottom") {
-            imageOpts.x = "5%";
-            imageOpts.y = "25%";
-            imageOpts.w = "90%";
-            imageOpts.h = "30%";
-          } else {
-            imageOpts.x = "50%";
-            imageOpts.y = "25%";
-            imageOpts.w = "40%";
-            imageOpts.h = "50%";
-          }
-
-          newSlide.addImage(imageOpts);
-          tempImages.push(imagePath);
+        // Clean up the response text by removing markdown formatting if present
+        if (responseText.includes("```")) {
+            responseText = responseText
+                .replace(/```json\n?/g, "")
+                .replace(/```\n?/g, "")
+                .trim();
         }
-      }
-    }
+
+        const pptContent = JSON.parse(responseText);
+
+        // Create PPT
+        const pres = new pptxgen();
+
+        // Configure default slide size (16:9)
+        pres.layout = "LAYOUT_16x9";
+
+        // Set presentation theme with proper contrast
+        const theme = pptContent.theme;
+        const defaultTheme = {
+            primary: "#000000", // Black background
+            accent: "#FFFFFF", // White accent
+            textPrimary: "#FFFFFF", // White text
+            textSecondary: "#E5E7EB", // Light gray text
+            background: {
+                light: "#333333", // Dark gray
+                dark: "#000000", // Pure black
+            },
+        };
+
+        // Use theme colors from API response or force dark theme
+        pres.theme = {
+            background: { color: defaultTheme.primary }, // Force black background
+            title: {
+                color: defaultTheme.textPrimary, // White text for titles
+                fontSize: 44,
+            },
+            body: {
+                color: defaultTheme.textPrimary, // White text for body
+                fontSize: 18,
+            },
+        };
+
+        // Keep track of temporary image files
+        const tempImages = [];
+
+        // Modify slide creation to ensure dark theme compatibility
+        // Replace inside the for-loop where slides are added
+        for (let i = 0; i < pptContent.slides.length; i++) {
+            const slide = pptContent.slides[i];
+            const newSlide = pres.addSlide();
+            newSlide.background = { color: defaultTheme.primary };
+
+            // Title zone
+            newSlide.addText(slide.title, {
+                x: "5%",
+                y: "5%",
+                w: "90%",
+                h: "15%",
+                fontSize: 32,
+                bold: true,
+                color: defaultTheme.textPrimary,
+                align: "left",
+            });
+
+            const layout = slide.imageLayout || {};
+            const contentPos = layout.contentPosition || "left";
+            const textOpts = {
+                y: "25%",
+                h: "60%",
+                fontSize: 18,
+                color: defaultTheme.textPrimary,
+                bullet: {
+                    type: "bullet",
+                    indent: 15,
+                    style: { type: "solid", color: defaultTheme.textPrimary },
+                },
+                bulletFont: { name: "Arial", size: 10 },
+                paraSpaceAfter: 20,
+                paraSpaceBefore: 5,
+                lineSpacing: 1.5,
+                indentLevel: 0,
+                margin: [0, 0, 15, 0],
+                breakLine: true,
+            };
+
+            // Layout logic based on contentPosition
+            if (contentPos === "left") {
+                textOpts.x = "5%";
+                textOpts.w = "45%";
+            } else if (contentPos === "right") {
+                textOpts.x = "50%";
+                textOpts.w = "45%";
+            } else if (contentPos === "bottom") {
+                textOpts.x = "5%";
+                textOpts.y = "60%";
+                textOpts.w = "90%";
+                textOpts.h = "30%";
+            } else {
+                textOpts.x = "5%";
+                textOpts.w = "90%";
+            }
+
+            if (slide.content && slide.content.length > 0) {
+                const bulletParagraphs = slide.content.map((line) => ({
+                    text: line,
+                    options: {
+                        bullet: true,
+                        fontSize: 18,
+                        color: defaultTheme.textPrimary,
+                        paraSpaceAfter: 10,
+                    },
+                }));
+                newSlide.addText(bulletParagraphs, {
+                    x: textOpts.x,
+                    y: textOpts.y,
+                    w: textOpts.w,
+                    h: textOpts.h,
+                });
+            }
+
+            // Add image if present
+            if (slide.imageKeywords && slide.imageKeywords.length > 0) {
+                const imagePromises = slide.imageKeywords.map((keyword) =>
+                    downloadImage(keyword, topic)
+                );
+                const imageResults = await Promise.all(imagePromises);
+                const validImages = imageResults.filter(
+                    (result) => result && result.path
+                );
+
+                if (validImages.length > 0) {
+                    const imagePath = validImages[0].path;
+                    const imageOpts = {
+                        path: imagePath,
+                        sizing: { type: "contain", w: "40%", h: "50%" },
+                    };
+
+                    if (contentPos === "left") {
+                        imageOpts.x = "50%";
+                        imageOpts.y = "25%";
+                        imageOpts.w = "40%";
+                        imageOpts.h = "50%";
+                    } else if (contentPos === "right") {
+                        imageOpts.x = "5%";
+                        imageOpts.y = "25%";
+                        imageOpts.w = "40%";
+                        imageOpts.h = "50%";
+                    } else if (contentPos === "bottom") {
+                        imageOpts.x = "5%";
+                        imageOpts.y = "25%";
+                        imageOpts.w = "90%";
+                        imageOpts.h = "30%";
+                    } else {
+                        imageOpts.x = "50%";
+                        imageOpts.y = "25%";
+                        imageOpts.w = "40%";
+                        imageOpts.h = "50%";
+                    }
+
+                    newSlide.addImage(imageOpts);
+                    tempImages.push(imagePath);
+                }
+            }
+        }
 
     // Save PPT in uploads directory
     const fileName = `${topic.replace(/[^a-zA-Z0-9]/g, "_")}_presentation.pptx`;
     const filePath = path.join(uploadsDir, fileName);
     await pres.writeFile({ fileName: filePath });
 
-    // Clean up temporary image files
-    tempImages.forEach((imagePath) => {
-      try {
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-        }
-      } catch (error) {
-        console.error("Error cleaning up image:", error);
-      }
-    });
+        // Clean up temporary image files
+        tempImages.forEach((imagePath) => {
+            try {
+                if (fs.existsSync(imagePath)) {
+                    fs.unlinkSync(imagePath);
+                }
+            } catch (error) {
+                console.error("Error cleaning up image:", error);
+            }
+        });
 
     // Save presentation record to database
     try {
@@ -702,19 +715,66 @@ Format the response strictly as JSON with this structure:
       // Continue execution even if DB save fails
     }
 
-    res.json({
-      success: true,
-      message: "PPT created successfully",
-      fileName: fileName,
-    });
-  } catch (error) {
-    console.error("Error creating PPT:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error creating PPT",
-      error: error.message,
-    });
-  }
+        res.json({
+            success: true,
+            message: "PPT created successfully",
+            fileName: fileName,
+        });
+    } catch (error) {
+        console.error("Error creating PPT:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error creating PPT",
+            error: error.message,
+        });
+    }
+});
+
+// Add these routes after existing routes
+
+// Get user's presentations
+router.get("/user/:userId", async (req, res) => {
+    try {
+        const presentations = await Model.find({ userId: req.params.userId })
+            .sort({ createdAt: -1 }); // Sort by newest first
+        
+        res.json({
+            success: true,
+            presentations
+        });
+    } catch (error) {
+        console.error("Error fetching presentations:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching presentations",
+            error: error.message
+        });
+    }
+});
+
+// Get single presentation details
+router.get("/details/:id", async (req, res) => {
+    try {
+        const presentation = await Model.findById(req.params.id);
+        if (!presentation) {
+            return res.status(404).json({
+                success: false,
+                message: "Presentation not found"
+            });
+        }
+        
+        res.json({
+            success: true,
+            presentation
+        });
+    } catch (error) {
+        console.error("Error fetching presentation details:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching presentation details",
+            error: error.message
+        });
+    }
 });
 
 module.exports = router;

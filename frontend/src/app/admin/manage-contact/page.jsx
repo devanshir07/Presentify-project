@@ -55,8 +55,7 @@ const ManageContact = () => {
     contact.message.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div className="p-8 ml-64">
+  return (    <div className="p-8 ml-64 min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Manage Contacts</h1>
         <p className="text-gray-600 mt-1">View and manage contact form submissions</p>

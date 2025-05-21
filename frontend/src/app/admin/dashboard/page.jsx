@@ -77,39 +77,42 @@ const Dashboard = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-6"
+      transition={{ duration: 0.5, delay }}      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-4"
     >
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
-          <Icon className="w-5 h-5 text-gray-500" />
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <Icon className="w-4 h-4 text-gray-500" />
+          <h3 className="text-base font-semibold text-gray-900">{title}</h3>
         </div>
       </div>
-      <div className="space-y-4">
-        {items.map((item, index) => (
-          <motion.div
+      <div className="space-y-3 max-h-[280px] overflow-y-auto">
+        {items.map((item, index) => (         
+           <motion.div
             key={index}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: delay + index * 0.1 }}
-            className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0"
+            transition={{ duration: 0.3, delay: delay + index * 0.1 }}       
+            className="flex flex-col border-b border-gray-100 pb-2 last:border-0"
           >
-            <div>
-              <p className="font-medium text-gray-800 truncate max-w-xs">
-                {item.name || item.title || item.message}
+            <div className="flex justify-between items-start mb-1.5">
+              <p className="font-medium text-gray-800 leading-snug text-sm">
+                {title === "Recent Feedback" ? item.message : (item.name || item.title)}
               </p>
-              <div className="flex items-center space-x-2 mt-1">
-                <HiOutlineClock className="w-4 h-4 text-gray-400" />
-                <p className="text-sm text-gray-500">
-                  {format(new Date(item.createdAt), 'MMM dd, yyyy')}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="px-2 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-full">
+              <span className="px-1.5 py-0.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-full ml-2 shrink-0">
                 {format(new Date(item.createdAt), 'HH:mm')}
               </span>
+            </div>
+            <div className="flex items-center text-xs">
+              <HiOutlineClock className="w-3.5 h-3.5 text-gray-400 mr-1" />
+              <p className="text-gray-500">
+                {format(new Date(item.createdAt), 'MMM dd, yyyy')}
+              </p>
+              {title === "Recent Feedback" && (
+                <>
+                  <span className="text-gray-300 mx-1.5">•</span>
+                  <p className="text-gray-500">By {item.name}</p>
+                </>
+              )}
             </div>
           </motion.div>
         ))}
@@ -117,8 +120,7 @@ const Dashboard = () => {
     </motion.div>
   );
   
-  return (
-    <div className="p-8 ml-64 bg-gray-50 min-h-screen">
+  return (    <div className="p-8 ml-64 min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
