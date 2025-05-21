@@ -19,7 +19,7 @@ export default function MyPresentations() {
             try {
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ppt/user/presentations`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });

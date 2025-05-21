@@ -11,6 +11,7 @@ const util = require("util");
 const { spawn } = require("child_process");
 const axios = require("axios");
 const auth = require("../middlewares/auth");
+const themePrompts = require('../utils/themePrompts');
 
 const genAPI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const convertAsync = util.promisify(libre.convert);
@@ -37,6 +38,59 @@ function isLightColor(color) {
 
   // Return true if color is light (luminance > 0.5)
   return luminance > 0.5;
+}
+
+// Enhanced color contrast checker using WCAG standards
+function getContrastRatio(foreground, background) {
+  // Convert hex to RGB
+  const hexToRgb = (hex) => {
+    const h = hex.replace('#', '');
+    return {
+      r: parseInt(h.substring(0, 2), 16),
+      g: parseInt(h.substring(2, 2), 16),
+      b: parseInt(h.substring(4, 2), 16)
+    };
+  };
+  
+  // Calculate relative luminance
+  const getLuminance = (color) => {
+    const rgb = hexToRgb(color);
+    // Normalize RGB values
+    const r = rgb.r / 255;
+    const g = rgb.g / 255;
+    const b = rgb.b / 255;
+    
+    // Transform using WCAG formula
+    const transformedR = r <= 0.03928 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4);
+    const transformedG = g <= 0.03928 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4);
+    const transformedB = b <= 0.03928 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4);
+    
+    // Calculate luminance
+    return 0.2126 * transformedR + 0.7152 * transformedG + 0.0722 * transformedB;
+  };
+  
+  // Get luminance values
+  const l1 = getLuminance(foreground);
+  const l2 = getLuminance(background);
+  
+  // Calculate contrast ratio
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+// Function to ensure adequate contrast between text and background
+function ensureContrastColors(textColor, bgColor) {
+  const contrastRatio = getContrastRatio(textColor, bgColor);
+  
+  // WCAG AA requires 4.5:1 for normal text, 3:1 for large text
+  if (contrastRatio < 4.5) {
+    // If contrast is insufficient, adjust the text color
+    const bgIsLight = isLightColor(bgColor);
+    return bgIsLight ? '#000000' : '#FFFFFF';  // Black for light bg, white for dark
+  }
+  
+  return textColor; // No adjustment needed
 }
 
 // Replace the downloadImage function with this improved version
@@ -419,8 +473,11 @@ router.get("/getall", (req, res) => {
 router.post("/create-ppt", auth, async (req, res) => {
     try {
       const userId = req.user._id; // Get user ID from the token
-        const { topic, numberOfSlides, additionalInfo, title, description } = req.body;
-
+        const { topic, numberOfSlides, additionalInfo, title, description, theme } = req.body;
+        
+        // Initialize array to track temporary image paths for cleanup
+        const tempImages = [];
+        
         // Validate user ID
         // if (!userId) {
         //     return res.status(400).json({
@@ -448,17 +505,21 @@ router.post("/create-ppt", auth, async (req, res) => {
             model: "gemini-2.0-flash",
         });
 
-        // Generate content for PPT using Gemini
+        // Get theme prompt or use default if not provided/invalid
+        const selectedTheme = theme && themePrompts[theme] ? themePrompts[theme] : themePrompts.modern;
+        
+        // Generate content for PPT using Gemini with the selected theme
         const prompt = `Create a professional and engaging presentation outline for the topic: "${topic}" with exactly ${numberOfSlides} slides.
 Additional requirements: ${additionalInfo || "None"}.
+
+${selectedTheme.prompt}
 
 Please follow these guidelines:
 1. Each slide should have:
    - A clear, concise title that captures the main point
    - 3-4 key bullet points (each 1-2 lines long)
    - Multiple descriptive keywords for image search that match the slide's content
-   - Background design theme suggestion (modern, gradient, geometric, etc.)
-   - Background color scheme (provide light and dark contrasting hex codes)
+   - Background design theme suggestion matching the ${selectedTheme.name} style
    - Text color that ensures WCAG 2.1 AA contrast ratio (provide hex code)
    - Appropriate slide transitions that flow naturally
    - Clear content zones to prevent overlap between text and images
@@ -473,12 +534,6 @@ Please follow these guidelines:
    - Maintain 16:9 aspect ratio for all layout decisions
    - Images should have fixed aspect ratios (4:3 or 16:9)
    - Minimum 20px padding between elements
-
-3. Color Guidelines:
-   - Background colors must provide sufficient contrast for text
-   - Text colors must meet WCAG 2.1 AA standards (4.5:1 ratio for normal text)
-   - Include a secondary text color for highlights or emphasis
-   - Consistent color scheme throughout presentation
 
 Format the response strictly as JSON with this structure:
 {
@@ -547,42 +602,48 @@ Format the response strictly as JSON with this structure:
         pres.layout = "LAYOUT_16x9";
 
         // Set presentation theme with proper contrast
-        const theme = pptContent.theme;
-        const defaultTheme = {
-            primary: "#FFFFFF", // Black background
-            accent: "#FFFFFF", // White accent
-            textPrimary: "#000000", // White text
-            textSecondary: "#E5E7EB", // Light gray text
-            background: {
-                light: "#333333", // Dark gray
-                dark: "#000000", // Pure black
-            },
-        };
+        const pptTheme = pptContent.theme;
 
-        // Use theme colors from API response or force dark theme
+        // Add special handling for dark themes
+        if (theme === 'dark' || !isLightColor(pptTheme.primary)) {
+            // If we're using a dark theme but Gemini returns light text colors that won't have enough contrast
+            if (isLightColor(pptTheme.primary) && isLightColor(pptTheme.textPrimary)) {
+                pptTheme.textPrimary = '#000000'; // Force black text on light backgrounds
+            }
+            
+            // If we're using a dark theme but Gemini returns dark text colors that won't have enough contrast
+            if (!isLightColor(pptTheme.primary) && !isLightColor(pptTheme.textPrimary)) {
+                pptTheme.textPrimary = '#FFFFFF'; // Force white text on dark backgrounds
+            }
+        }
+
+        // Use theme colors with contrast enforcement
         pres.theme = {
-            background: { color: defaultTheme.primary }, // Force black background
+            background: { color: pptTheme.primary },
             title: {
-                color: defaultTheme.textPrimary, // White text for titles
+                color: ensureContrastColors(pptTheme.textPrimary, pptTheme.primary),
                 fontSize: 44,
             },
             body: {
-                color: defaultTheme.textPrimary, // White text for body
+                color: ensureContrastColors(pptTheme.textPrimary, pptTheme.primary),
                 fontSize: 18,
             },
         };
 
-        // Keep track of temporary image files
-        const tempImages = [];
-
-        // Modify slide creation to ensure dark theme compatibility
-        // Replace inside the for-loop where slides are added
+        // Apply theme colors to slides
         for (let i = 0; i < pptContent.slides.length; i++) {
             const slide = pptContent.slides[i];
             const newSlide = pres.addSlide();
-            newSlide.background = { color: defaultTheme.primary };
+            
+            // Use theme colors from API
+            const bgColor = pptTheme.primary;
+            newSlide.background = { color: bgColor };
 
-            // Title zone
+            // Ensure text colors have sufficient contrast with background
+            const titleColor = ensureContrastColors(pptTheme.textPrimary, bgColor);
+            const bodyColor = ensureContrastColors(pptTheme.textPrimary, bgColor);
+
+            // Title zone with contrast-checked colors
             newSlide.addText(slide.title, {
                 x: "5%",
                 y: "5%",
@@ -590,21 +651,20 @@ Format the response strictly as JSON with this structure:
                 h: "15%",
                 fontSize: 32,
                 bold: true,
-                color: defaultTheme.textPrimary,
+                color: titleColor,
                 align: "left",
             });
-
-            const layout = slide.imageLayout || {};
-            const contentPos = layout.contentPosition || "left";
+            
+            // Rest of slide content with contrast-checked colors
             const textOpts = {
                 y: "25%",
                 h: "60%",
                 fontSize: 18,
-                color: defaultTheme.textPrimary,
+                color: bodyColor,
                 bullet: {
                     type: "bullet",
                     indent: 15,
-                    style: { type: "solid", color: defaultTheme.textPrimary },
+                    style: { type: "solid", color: bodyColor },
                 },
                 bulletFont: { name: "Arial", size: 10 },
                 paraSpaceAfter: 20,
@@ -614,6 +674,11 @@ Format the response strictly as JSON with this structure:
                 margin: [0, 0, 15, 0],
                 breakLine: true,
             };
+
+            // Extract contentPosition from slide data or use default
+            const contentPos = slide.imageLayout && slide.imageLayout.contentPosition 
+                              ? slide.imageLayout.contentPosition 
+                              : "right"; // Default position if not specified
 
             // Layout logic based on contentPosition
             if (contentPos === "left") {
@@ -638,7 +703,7 @@ Format the response strictly as JSON with this structure:
                     options: {
                         bullet: true,
                         fontSize: 18,
-                        color: defaultTheme.textPrimary,
+                        color: bodyColor, // Use the contrast-checked color
                         paraSpaceAfter: 10,
                     },
                 }));
@@ -742,12 +807,13 @@ Format the response strictly as JSON with this structure:
     }
 });
 
-// Add these routes after existing routes
-
-// Get user's presentations
-router.get("/user/:userId", async (req, res) => {
+// Add this route to fetch user's presentations using auth middleware
+router.get("/user/presentations", auth, async (req, res) => {
     try {
-        const presentations = await Model.find({ userId: req.params.userId })
+        const userId = req.user._id;
+        
+        // Find all presentations for the authenticated user
+        const presentations = await Model.find({ userId })
             .sort({ createdAt: -1 }); // Sort by newest first
         
         res.json({
