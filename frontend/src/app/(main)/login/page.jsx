@@ -62,7 +62,7 @@ const Login = () => {
                     Login
                 </motion.h2>
                 <motion.form 
-                    className="mx-auto max-w-lg rounded-xl border bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="mx-auto max-w-sm rounded-xl border bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300"
                     onSubmit={formik.handleSubmit}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
