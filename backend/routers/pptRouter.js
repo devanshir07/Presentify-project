@@ -10,6 +10,7 @@ const libre = require("libreoffice-convert");
 const util = require("util");
 const { spawn } = require("child_process");
 const axios = require("axios");
+const auth = require("../middlewares/auth");
 
 const genAPI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const convertAsync = util.promisify(libre.convert);
@@ -191,6 +192,7 @@ const cleanupOldFiles = () => {
 
 // Run cleanup every hour
 setInterval(cleanupOldFiles, 60 * 60 * 1000);
+
 
 // Add preview endpoint
 router.get("/preview/:filename", async (req, res) => {
@@ -414,9 +416,10 @@ router.get("/getall", (req, res) => {
 
 // Modify the create-ppt endpoint
 
-router.post("/create-ppt", async (req, res) => {
+router.post("/create-ppt", auth, async (req, res) => {
     try {
-        const { topic, numberOfSlides, additionalInfo, userId, title, description } = req.body;
+      const userId = req.user._id; // Get user ID from the token
+        const { topic, numberOfSlides, additionalInfo, title, description } = req.body;
 
         // Validate user ID
         // if (!userId) {

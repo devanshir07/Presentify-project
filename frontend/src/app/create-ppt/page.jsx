@@ -34,6 +34,7 @@ export default function CreatePPT() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    authorization: `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify(formData)
             });
@@ -167,7 +168,7 @@ export default function CreatePPT() {
                                         </motion.button>
 
                                         <div className="h-[500px] border border-gray-200 rounded-xl overflow-hidden">
-                                            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js}`}>
+                                            <Worker workerUrl={`https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`}>
                                                 <Viewer
                                                     fileUrl={`${process.env.NEXT_PUBLIC_API_URL}/api/ppt/preview/${result.fileName}`}
                                                 />
