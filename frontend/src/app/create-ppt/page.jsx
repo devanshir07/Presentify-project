@@ -380,8 +380,9 @@ export default function CreatePPT() {
                                         </div>
 
                                         <div className="h-[500px] border border-gray-200 rounded-xl overflow-hidden shadow-md relative">
-                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10 opacity-0 hover:opacity-100 transition-opacity duration-300">
-                                                <div className="bg-black/70 text-white px-3 py-1 rounded text-sm">Scroll to view all slides</div>
+                                            {/* Remove or modify the overlay that's causing the scroll issue */}
+                                            <div className="absolute top-0 left-0 right-0 bg-black/70 text-white px-3 py-2 text-sm text-center pointer-events-none">
+                                                Scroll to view all slides
                                             </div>
                                             <Worker workerUrl={`https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`}>
                                                 <Viewer
