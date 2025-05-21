@@ -1,5 +1,4 @@
 const {Schema, model} = require('../connection');
-
 const pptSchema = new Schema({
     userId: {type: Schema.Types.ObjectId, ref: 'User', required: true},
     fileName: {type: String, required: true},
@@ -10,4 +9,4 @@ const pptSchema = new Schema({
     createdAt: {type: Date, default: Date.now},
 });
 
-module.exports = model('PPTdata', pptSchema);
+module.exports = model('PPTdata', pptSchema);
