@@ -2,6 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+// import Navbar from "../components/Navbar/page";
 import { AppProvider } from "@/contexts/AppContext";
 import FloatingFeedback from "@/components/FloatingFeedback";
 
@@ -26,7 +27,6 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        
         {/* <Navbar/> */}
         <AppProvider>
         <Toaster position="top-center"/>

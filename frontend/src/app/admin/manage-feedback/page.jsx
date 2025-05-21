@@ -45,9 +45,8 @@ const ManageFeedback = () => {
     (feedback.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (feedback.message?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
-
   return (
-    <div className="p-8 ml-64">
+    <div className="p-8 ml-64 min-h-screen bg-gradient-to-br from-pink-50 via-rose-50 to-purple-50">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Manage Feedback</h1>
         <div className="relative">

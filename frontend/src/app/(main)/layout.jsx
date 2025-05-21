@@ -20,17 +20,11 @@ export const metadata = {
 
 export default function mainLayout({ children }) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        
-        <Navbar/>
-
-        <Toaster position="top-center"/>
+    <div className={`${geistSans.variable} ${geistMono.variable}`}>
+      <Navbar />
+      <main>
         {children}
-        {/* <Sidebar/> */}
-      </body>
-    </html>
+      </main>
+    </div>
   );
 }
